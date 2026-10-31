@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CubeTag64 — Brother PT-P300BT 64px Pixel-Perfect Inventory Tag Studio</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    canvas.pixelated {
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -webkit-crisp-edges;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+
+  <!-- Top Header -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold mono text-sm">
+          64px
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg text-white">CubeTag64 <span class="text-slate-400 font-normal text-sm">• PT-P300BT Tag Studio</span></h1>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 mono">180 DPI • 12mm TZe</span>
+            <span id="apiActiveBadge" class="hidden text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/40 mono">URL API Mode</span>
+          </div>
+          <p class="text-xs text-slate-400">Integer-pixel 1-bit raster generator &amp; Static URL API for PCB <span class="mono text-slate-300">MBH7BTZ42A-100101</span></p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex flex-wrap items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700/70">
+        <button id="tabBtnDesigner" class="px-3 py-1.5 rounded-md text-xs font-medium bg-amber-500 text-slate-950 transition">
+          1. Tag &amp; Strip Designer
+        </button>
+        <button id="tabBtnApi" class="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">
+          4. GitHub Pages URL API
+        </button>
+        <button id="tabBtnHardware" class="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">
+          2. PCB &amp; Bluetooth Protocol
+        </button>
+        <button id="tabBtnPython" class="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">
+          3. Python Direct Printer
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Toast Banner -->
+  <div id="toastBanner" class="hidden fixed bottom-4 right-4 z-50 max-w-sm bg-slate-800 border border-amber-500/50 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-start gap-3">
+    <div id="toastIcon" class="text-amber-400 mt-0.5 mono font-bold">[i]</div>
+    <div class="flex-1 text-xs leading-relaxed" id="toastMessage">Notification</div>
+    <button id="toastCloseBtn" class="text-slate-400 hover:text-white text-xs font-bold">✕</button>
+  </div>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+
+    <!-- VIEW 1: TAG & STRIP DESIGNER -->
+    <section id="viewDesigner" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Left Column: Controls -->
+      <div class="lg:col-span-5 space-y-5">
+        
+        <!-- Symbology & Integer Scaling Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Symbology &amp; Pixel Grid</h2>
+            <span id="gridBadge" class="text-xs mono px-2 py-0.5 rounded bg-slate-800 text-amber-400 border border-slate-700">4×4 px/module</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <button data-sym="datamatrix" class="sym-btn p-2.5 rounded-lg border border-amber-500 bg-amber-500/10 text-left transition">
+              <div class="text-xs font-bold text-amber-300">DataMatrix</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Best for 64px (10×10–16×16)</div>
+            </button>
+            <button data-sym="qr" class="sym-btn p-2.5 rounded-lg border border-slate-700 bg-slate-800/50 hover:border-slate-600 text-left transition">
+              <div class="text-xs font-bold text-slate-200">QR Code v1</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">21×21 @ 3px = 63px tall</div>
+            </button>
+            <button data-sym="code128" class="sym-btn p-2.5 rounded-lg border border-slate-700 bg-slate-800/50 hover:border-slate-600 text-left transition">
+              <div class="text-xs font-bold text-slate-200">Code 128</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">1D Linear Barcode</div>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 pt-1">
+            <div>
+              <label for="moduleScaleSelect" class="block text-xs text-slate-400 mb-1">Module Size (Integer Dots)</label>
+              <select id="moduleScaleSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                <option value="auto" selected>Auto-Maximize for 64px</option>
+                <option value="2">2 px / module (0.28 mm)</option>
+                <option value="3">3 px / module (0.42 mm)</option>
+                <option value="4">4 px / module (0.56 mm)</option>
+                <option value="5">5 px / module (0.70 mm)</option>
+              </select>
+            </div>
+            <div>
+              <label for="layoutSelect" class="block text-xs text-slate-400 mb-1">Thumb Label Layout</label>
+              <select id="layoutSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                <option value="side" selected>Code + 2-Line Text (~24mm)</option>
+                <option value="compact">Code + Vertical ID (~15mm)</option>
+                <option value="codeonly">Code Only Square (~12mm)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Single or Batch Inventory Items Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Inventory Payload (Chain Strip)</h2>
+            <div class="flex gap-1.5">
+              <button id="presetToolsBtn" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                Load IT/Tools Sample
+              </button>
+              <button id="autoSeqBtn" class="text-[11px] px-2 py-1 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition">
+                +5 Sequence
+              </button>
+            </div>
+          </div>
+
+          <p class="text-xs text-slate-400 leading-relaxed">
+            The PT-P300BT cutter sits <strong>24mm</strong> away from the printhead. Enter multiple tags below (`CODE | TITLE | SUBTITLE`) or pass them via URL parameters (`?items=...`) to print a continuous <strong>chain strip</strong> with scissor ticks.
+          </p>
+
+          <div>
+            <textarea id="batchInput" rows="5" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs mono text-emerald-300 focus:outline-none focus:border-amber-500 leading-relaxed" spellcheck="false">IT-001 | USB-C PD | 100W 2m
+IT-002 | RJ45 CAT6 | Patch 1.5m
+TL-014 | TORX T8 | Precision
+PT-089 | ESP32-S3 | DevKitC-1</textarea>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2.5">
+            <div>
+              <label for="gapPxInput" class="block text-xs text-slate-400 mb-1">Cut Gap (px)</label>
+              <input id="gapPxInput" type="number" min="8" max="64" step="2" value="18" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white mono">
+            </div>
+            <div>
+              <label for="cutMarksToggle" class="block text-xs text-slate-400 mb-1">Cut Guides</label>
+              <select id="cutMarksToggle" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+                <option value="dashed" selected>Dashed Line</option>
+                <option value="ticks">Edge Ticks</option>
+                <option value="none">Blank Space</option>
+              </select>
+            </div>
+            <div>
+              <label for="flipYSelect" class="block text-xs text-slate-400 mb-1">Head Y-Order</label>
+              <select id="flipYSelect" class="w-full bg-slate-800 border border-emerald-500/40 rounded-lg px-2 py-1.5 text-xs text-emerald-300">
+                <option value="normal" selected>Normal (Fixed)</option>
+                <option value="mirrored">Mirrored (Legacy)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export & Direct Print Actions -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+          <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Output &amp; Direct Print</h2>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button id="downloadPngBtn" class="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition shadow">
+              <span>⬇ Download 1-Bit 64px PNG</span>
+            </button>
+            <button id="webSerialPrintBtn" class="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition shadow">
+              <span>⚡ Print via Bluetooth Serial</span>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 pt-1">
+            <button id="copyShareUrlBtn" class="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 text-xs font-medium transition">
+              🔗 Copy Parameterized URL for Current Strip
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800">
+            <span>Total Strip Dimensions:</span>
+            <span id="stripStatsText" class="mono text-slate-200 font-semibold">64 px × 0 px (0.0 mm)</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Live 1:1 & Magnified Pixel Grid Preview -->
+      <div class="lg:col-span-7 space-y-5">
+        
+        <!-- Magnified Pixel-Grid Inspector -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-sm font-semibold text-white">Live 1-Bit Thermal Head Preview (64 Printable Dots Tall)</h2>
+              <p class="text-xs text-slate-400">Notice in your photo how the text printed vertically mirrored? I inverted the Y-bit order (`32 + y`) so text prints right-side up!</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <label for="zoomRange" class="text-xs text-slate-400">Zoom:</label>
+              <input id="zoomRange" type="range" min="1" max="6" step="1" value="3" class="w-24 accent-amber-500">
+              <span id="zoomValueLabel" class="text-xs mono text-amber-400 w-8">3×</span>
+              <button id="invertPreviewBtn" class="text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                Tape: White (TZe-231)
+              </button>
+            </div>
+          </div>
+
+          <!-- Scrollable Tape Container -->
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 overflow-x-auto flex flex-col items-start gap-4">
+            <!-- Top Ruler -->
+            <div id="rulerText" class="text-[11px] mono text-slate-400 flex items-center gap-4">
+              <span>▲ Top Margin: 1.5mm (32 unprinted bits)</span>
+              <span>•</span>
+              <span class="text-emerald-400">Printable Band: 9.0mm (64 active dots @ 180 DPI)</span>
+              <span>•</span>
+              <span>▼ Bottom Margin: 1.5mm (32 unprinted bits)</span>
+            </div>
+
+            <!-- Simulated 12mm TZe Tape -->
+            <div id="tapeSimulationBox" class="inline-block bg-white p-2 rounded shadow-inner border-y-4 border-slate-300">
+              <canvas id="previewCanvas" class="pixelated block"></canvas>
+            </div>
+
+            <!-- Actual 1:1 Scale Reference -->
+            <div class="pt-2 border-t border-slate-900 w-full flex flex-wrap items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="text-xs font-medium text-slate-300">1:1 Native Resolution Canvas (64px height):</div>
+                <div class="text-[11px] text-slate-400">Right-click → Save Image As, or use the Download button for exact 64px raster height.</div>
+              </div>
+              <div class="bg-white p-1 rounded border border-slate-600">
+                <canvas id="nativeCanvas" height="64" class="pixelated block"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scan Audit Metrics -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+            <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3">
+              <div class="text-[11px] text-slate-400">Vertical Head Usage</div>
+              <div id="metricHeadUsage" class="text-sm font-bold mono text-emerald-400 mt-0.5">60 / 64 dots</div>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3">
+              <div class="text-[11px] text-slate-400">Physical Dot Pitch</div>
+              <div id="metricModuleMm" class="text-sm font-bold mono text-amber-400 mt-0.5">0.56 mm/mod</div>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3">
+              <div class="text-[11px] text-slate-400">Anti-Aliasing Blur</div>
+              <div class="text-sm font-bold mono text-emerald-400 mt-0.5">0% (1-Bit Integer)</div>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3">
+              <div class="text-[11px] text-slate-400">TZe Tape Saved</div>
+              <div id="metricTapeSaved" class="text-sm font-bold mono text-sky-400 mt-0.5">72 mm saved</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live URL Parameter Preview Bar -->
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-sky-400">Live GitHub Pages Query-String API Endpoint</h3>
+            <span class="text-[11px] mono text-slate-400">Zero backend required (`URLSearchParams`)</span>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5 flex items-center justify-between gap-2">
+            <code id="liveApiUrlPreview" class="text-[11px] mono text-sky-300 truncate">?sym=datamatrix&amp;scale=auto&amp;layout=side&amp;items=...</code>
+            <button id="openApiTabQuickBtn" class="shrink-0 text-[11px] px-2.5 py-1 rounded bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 transition">
+              API Docs →
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VIEW 2: GITHUB PAGES URL PARAMETER API -->
+    <section id="viewApi" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-base font-bold text-white">GitHub Pages Static URL Parameter API (<span class="mono text-sky-400">CubeTag64</span>)</h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Yes! GitHub Pages serves static HTML/JS with full access to <span class="mono text-slate-200">window.location.search</span> and <span class="mono text-slate-200">window.location.hash</span>. This file already parses URL parameters on load so any inventory app (Homebox, Snipe-IT, Grocy, Home Assistant) can call it like an API!
+            </p>
+          </div>
+          <button id="copyCurrentApiUrlBtn" class="px-3 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs transition">
+            🔗 Copy Current Strip URL
+          </button>
+        </div>
+
+        <!-- Supported Query Parameters Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 uppercase">
+                <th class="py-2 pr-4">Parameter</th>
+                <th class="py-2 pr-4">Values / Format</th>
+                <th class="py-2 pr-4">Example</th>
+                <th class="py-2">What It Does</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/70 mono text-[11px]">
+              <tr>
+                <td class="py-2.5 pr-4 text-amber-400 font-bold">code, title, sub</td>
+                <td class="py-2.5 pr-4 text-slate-300">Strings (Single Tag)</td>
+                <td class="py-2.5 pr-4 text-emerald-300">?code=TL-014&amp;title=TORX+T8&amp;sub=Precision</td>
+                <td class="py-2.5 font-sans text-slate-300">Generates a single tag directly from URL variables (ideal for Homebox/Snipe-IT templates).</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-4 text-amber-400 font-bold">items</td>
+                <td class="py-2.5 pr-4 text-slate-300">Semicolon `;` separated</td>
+                <td class="py-2.5 pr-4 text-emerald-300">?items=IT-01|USB-C|2m;TL-14|TORX|T8</td>
+                <td class="py-2.5 font-sans text-slate-300">Populates an entire multi-tag chain strip in a single URL call.</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-4 text-amber-400 font-bold">sym</td>
+                <td class="py-2.5 pr-4 text-slate-300">datamatrix | qr | code128</td>
+                <td class="py-2.5 pr-4 text-emerald-300">&amp;sym=datamatrix</td>
+                <td class="py-2.5 font-sans text-slate-300">Selects the 1-bit integer barcode symbology.</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-4 text-amber-400 font-bold">scale</td>
+                <td class="py-2.5 pr-4 text-slate-300">auto | 2 | 3 | 4 | 5</td>
+                <td class="py-2.5 pr-4 text-emerald-300">&amp;scale=4</td>
+                <td class="py-2.5 font-sans text-slate-300">Locks exact integer dots per module (`4` = 4×4 thermal dots per square).</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-4 text-amber-400 font-bold">layout</td>
+                <td class="py-2.5 pr-4 text-slate-300">side | compact | codeonly</td>
+                <td class="py-2.5 pr-4 text-emerald-300">&amp;layout=side</td>
+                <td class="py-2.5 font-sans text-slate-300">Chooses 2-line text, single-line compact ID, or square code only.</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-4 text-amber-400 font-bold">action</td>
+                <td class="py-2.5 pr-4 text-slate-300">png | rawimg | py</td>
+                <td class="py-2.5 pr-4 text-emerald-300">&amp;action=png</td>
+                <td class="py-2.5 font-sans text-slate-300">`png` auto-downloads the 64px PNG; `rawimg` replaces the page with a pure `&lt;img&gt;` tag; `py` auto-downloads `print_p300bt.py`.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Interactive API Endpoint Tester -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2.5">
+            <div class="text-xs font-bold uppercase tracking-wider text-amber-400">Homebox / Snipe-IT Webhook Link Template</div>
+            <p class="text-xs text-slate-400">Paste this template into your inventory app's custom "Print Tag" button:</p>
+            <pre class="text-[11px] mono text-emerald-300 bg-slate-900 p-2.5 rounded border border-slate-800 overflow-x-auto">https://&lt;your-gh-user&gt;.github.io/cubetag64/?code={ASSET_ID}&amp;title={ITEM_NAME}&amp;sub={LOCATION}&amp;sym=datamatrix</pre>
+            <button id="testSingleUrlParamBtn" class="text-xs px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 transition">
+              ▶ Simulate `?code=HBX-409&amp;title=SATA+SSD&amp;sub=DRAWER-3`
+            </button>
+          </div>
+
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2.5">
+            <div class="text-xs font-bold uppercase tracking-wider text-emerald-400">PostMessage / Iframe Embed API</div>
+            <p class="text-xs text-slate-400">Other web apps can also embed CubeTag64 in an iframe and request a 64px PNG or PTCBP byte array via `window.postMessage`:</p>
+            <pre class="text-[11px] mono text-sky-300 bg-slate-900 p-2.5 rounded border border-slate-800 overflow-x-auto">iframe.contentWindow.postMessage({
+  type: 'CUBETAG64_RENDER',
+  items: 'IT-001|USB-C|100W;TL-014|TORX|T8',
+  sym: 'datamatrix'
+}, '*');</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: PCB & BLUETOOTH PROTOCOL + REAL HARDWARE PHOTO -->
+    <section id="viewHardware" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-base font-bold text-white">Verified Hardware Proof on <span class="mono text-amber-400">PT-P300BT (MBH7BTZ42A-100101)</span></h2>
+            <p class="text-xs text-slate-400 mt-0.5">First physical test strip printed at 180 DPI (64 active dots) with chained scissor cut guides</p>
+          </div>
+          <span class="text-xs mono px-2.5 py-1 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Hardware Verified ✓</span>
+        </div>
+
+        <!-- Hardware Verification Photo + Y-Mirror Fix Explanation -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center bg-slate-950 border border-slate-800 rounded-xl p-4">
+          <div class="md:col-span-5">
+            <img src="docs/hardware-proof.jpg" alt="Brother PT-P300BT printing 64px DataMatrix inventory strip" class="max-w-full h-auto rounded-lg border border-slate-700 shadow-lg max-h-72 object-cover mx-auto">
+          </div>
+          <div class="md:col-span-7 space-y-3 text-xs leading-relaxed">
+            <div class="inline-block px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold">
+              What Your Test Print Photo Revealed (And How v1.1 Fixed It!)
+            </div>
+            <p class="text-slate-200">
+              Look closely at your photo: the 12×12 DataMatrix squares and dashed cut lines came out <strong>razor-sharp</strong> (and scanned right away because ECC 200 decoders handle mirrored matrices), but the text (<span class="mono text-amber-300">TL-014 / TORX T8</span>) printed <strong>vertically mirrored</strong>!
+            </p>
+            <p class="text-slate-400">
+              Why? In Brother's 16-byte (128-bit) raster column format, bit 32 corresponds to the top of the horizontal tape as it feeds left-to-right out of the slot. In v1.0, mapping <span class="mono text-slate-200">bitPos = 32 + (63 - y)</span> flipped the Y-axis upside down. In v1.1 (now active by default under <strong>Head Y-Order: Normal (Fixed)</strong>), we map <span class="mono text-emerald-300">bitPos = 32 + y</span> so your text and DataMatrix print right-side up!
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs leading-relaxed">
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
+            <div class="text-amber-400 font-bold uppercase tracking-wider">1. The Bluetooth-to-UART Bridge</div>
+            <p class="text-slate-300">
+              On the <span class="mono text-white">MBH7BTZ42A-100101</span> board, the Bluetooth module identifies in packet captures with a Fujitsu OUI and speaks standard <strong>Bluetooth Classic SPP (RFCOMM channel 1)</strong>—not locked-down BLE!
+            </p>
+            <p class="text-slate-400">
+              The MCU behind it runs the exact same <strong>PTCBP raster command set</strong> documented for Brother's industrial PT-9500PC and PT-P710BT printers.
+            </p>
+          </div>
+
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
+            <div class="text-emerald-400 font-bold uppercase tracking-wider">2. The 128-Bit / 64-Dot Geometry</div>
+            <p class="text-slate-300">
+              Each vertical column sent over Bluetooth is <strong>16 bytes (128 bits)</strong>:
+            </p>
+            <ul class="list-disc list-inside text-slate-400 space-y-1 mono text-[11px]">
+              <li>Bits 0–31 (4 bytes): Top unprinted padding (0x00)</li>
+              <li class="text-emerald-300">Bits 32–95 (8 bytes): 64 active thermal dots!</li>
+              <li>Bits 96–127 (4 bytes): Bottom padding (0x00)</li>
+            </ul>
+          </div>
+
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
+            <div class="text-sky-400 font-bold uppercase tracking-wider">3. Cassette Sensor Hole Hack</div>
+            <p class="text-slate-300">
+              Inside the tape bay is a cluster of mechanical microswitches that read the plastic holes on the bottom of the TZe cartridge.
+            </p>
+            <p class="text-slate-400">
+              By covering specific identification holes with electrical tape, the PT-P300BT prints on cheap <strong>AliExpress HSe heat-shrink tubing</strong> for labeling cables directly!
+            </p>
+          </div>
+        </div>
+
+        <!-- Raster Packet Visualizer -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Live PTCBP Hex Stream Inspector (First 6 Non-Empty Columns)</h3>
+            <span id="packetLengthBadge" class="text-xs mono text-emerald-400">0 raster columns</span>
+          </div>
+          <pre id="hexPreviewBox" class="text-[11px] mono text-slate-300 bg-slate-900 p-3 rounded-lg overflow-x-auto border border-slate-800"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: PYTHON DIRECT PRINTER -->
+    <section id="viewPython" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-white">Standalone Python Bluetooth Printer Script (Y-Axis Corrected + Chain-Print)</h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Includes the corrected top-to-bottom Y-bit order so <span class="mono text-emerald-300">TL-014 | TORX T8</span> prints right-side up!
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="copyPythonBtn" class="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition">
+              📋 Copy Python Script
+            </button>
+            <button id="downloadPythonBtn" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-semibold text-xs transition">
+              ⬇ Download print_p300bt.py
+            </button>
+          </div>
+        </div>
+
+        <pre id="pythonCodeBox" class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs mono text-emerald-300 overflow-x-auto max-h-[500px] leading-relaxed"></pre>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // 1. DETERMINISTIC INTEGER-PIXEL BARCODE ENCODERS (DATA MATRIX, QR, CODE128)
+    // =========================================================================
+
+    const DM_SPECS = [
+      { rows: 10, cols: 10, dataBytes: 3,  ecBytes: 5  },
+      { rows: 12, cols: 12, dataBytes: 5,  ecBytes: 7  },
+      { rows: 14, cols: 14, dataBytes: 8,  ecBytes: 10 },
+      { rows: 16, cols: 16, dataBytes: 12, ecBytes: 12 },
+      { rows: 18, cols: 18, dataBytes: 18, ecBytes: 14 },
+      { rows: 20, cols: 20, dataBytes: 22, ecBytes: 18 }
+    ];
+
+    function encodeDataMatrixASCII(text) {
+      const cw = [];
+      let i = 0;
+      while (i < text.length) {
+        const c1 = text.charCodeAt(i);
+        const c2 = (i + 1 < text.length) ? text.charCodeAt(i + 1) : -1;
+        if (c1 >= 48 && c1 <= 57 && c2 >= 48 && c2 <= 57) {
+          cw.push(130 + (c1 - 48) * 10 + (c2 - 48));
+          i += 2;
+        } else {
+          cw.push((c1 & 0x7f) + 1);
+          i += 1;
+        }
+      }
+      return cw;
+    }
+
+    function computeReedSolomonDM(dataCw, ecLen) {
+      const gfExp = new Uint8Array(512);
+      const gfLog = new Uint8Array(256);
+      let x = 1;
+      for (let i = 0; i < 255; i++) {
+        gfExp[i] = x;
+        gfLog[x] = i;
+        x <<= 1;
+        if (x & 256) x ^= 301;
+      }
+      for (let i = 255; i < 512; i++) gfExp[i] = gfExp[i - 255];
+
+      let g = [1];
+      for (let i = 1; i <= ecLen; i++) {
+        const next = new Array(g.length + 1).fill(0);
+        const root = gfExp[i];
+        for (let j = 0; j < g.length; j++) {
+          next[j] ^= g[j];
+          if (g[j] !== 0) {
+            next[j + 1] ^= gfExp[gfLog[g[j]] + gfLog[root]];
+          }
+        }
+        g = next;
+      }
+
+      const ecc = new Uint8Array(ecLen);
+      for (let i = 0; i < dataCw.length; i++) {
+        const factor = dataCw[i] ^ ecc[0];
+        for (let j = 0; j < ecLen - 1; j++) ecc[j] = ecc[j + 1];
+        ecc[ecLen - 1] = 0;
+        if (factor !== 0) {
+          const logF = gfLog[factor];
+          for (let j = 0; j < ecLen; j++) {
+            const gCoeff = g[j + 1];
+            if (gCoeff !== 0) {
+              ecc[j] ^= gfExp[logF + gfLog[gCoeff]];
+            }
+          }
+        }
+      }
+      return Array.from(ecc);
+    }
+
+    function generateDataMatrixGrid(text) {
+      const cw = encodeDataMatrixASCII(text || '0');
+      let spec = DM_SPECS[DM_SPECS.length - 1];
+      for (const s of DM_SPECS) {
+        if (cw.length <= s.dataBytes) {
+          spec = s;
+          break;
+        }
+      }
+      const padded = cw.slice(0, spec.dataBytes);
+      if (padded.length < spec.dataBytes) {
+        padded.push(129);
+        while (padded.length < spec.dataBytes) {
+          const r = ((149 * (padded.length + 1)) % 253) + 1;
+          padded.push((129 + r) <= 254 ? (129 + r) : (129 + r - 254));
+        }
+      }
+      const ecc = computeReedSolomonDM(padded, spec.ecBytes);
+      const allCodewords = padded.concat(ecc);
+
+      const nrow = spec.rows - 2;
+      const ncol = spec.cols - 2;
+      const map = new Int16Array(nrow * ncol).fill(-1);
+
+      function module(row, col, chr, bit) {
+        if (row < 0) { row += nrow; col += 4 - ((nrow + 4) % 8); }
+        if (col < 0) { col += ncol; row += 4 - ((ncol + 4) % 8); }
+        const v = (allCodewords[chr] >> (8 - bit)) & 1;
+        map[row * ncol + col] = v;
+      }
+
+      function utah(row, col, chr) {
+        module(row - 2, col - 2, chr, 1);
+        module(row - 2, col - 1, chr, 2);
+        module(row - 1, col - 2, chr, 3);
+        module(row - 1, col - 1, chr, 4);
+        module(row - 1, col,     chr, 5);
+        module(row,     col - 2, chr, 6);
+        module(row,     col - 1, chr, 7);
+        module(row,     col,     chr, 8);
+      }
+
+      function corner1(chr) {
+        module(nrow - 1, 0, chr, 1);
+        module(nrow - 1, 1, chr, 2);
+        module(nrow - 1, 2, chr, 3);
+        module(0, ncol - 2, chr, 4);
+        module(0, ncol - 1, chr, 5);
+        module(1, ncol - 1, chr, 6);
+        module(2, ncol - 1, chr, 7);
+        module(3, ncol - 1, chr, 8);
+      }
+      function corner2(chr) {
+        module(nrow - 3, 0, chr, 1);
+        module(nrow - 2, 0, chr, 2);
+        module(nrow - 1, 0, chr, 3);
+        module(0, ncol - 4, chr, 4);
+        module(0, ncol - 3, chr, 5);
+        module(0, ncol - 2, chr, 6);
+        module(0, ncol - 1, chr, 7);
+        module(1, ncol - 1, chr, 8);
+      }
+      function corner3(chr) {
+        module(nrow - 3, 0, chr, 1);
+        module(nrow - 2, 0, chr, 2);
+        module(nrow - 1, 0, chr, 3);
+        module(0, ncol - 2, chr, 4);
+        module(0, ncol - 1, chr, 5);
+        module(1, ncol - 1, chr, 6);
+        module(2, ncol - 1, chr, 7);
+        module(3, ncol - 1, chr, 8);
+      }
+      function corner4(chr) {
+        module(nrow - 1, 0, chr, 1);
+        module(nrow - 1, ncol - 1, chr, 2);
+        module(0, ncol - 3, chr, 3);
+        module(0, ncol - 2, chr, 4);
+        module(0, ncol - 1, chr, 5);
+        module(1, ncol - 3, chr, 6);
+        module(1, ncol - 2, chr, 7);
+        module(1, ncol - 1, chr, 8);
+      }
+
+      let chr = 0, row = 4, col = 0;
+      do {
+        if ((row === nrow) && (col === 0)) corner1(chr++);
+        if ((row === nrow - 2) && (col === 0) && (ncol % 4 !== 0)) corner2(chr++);
+        if ((row === nrow - 2) && (col === 0) && (ncol % 8 === 4)) corner3(chr++);
+        if ((row === nrow + 4) && (col === 2) && (ncol % 8 === 0)) corner4(chr++);
+        do {
+          if ((row < nrow) && (col >= 0) && (map[row * ncol + col] === -1)) {
+            utah(row, col, chr++);
+          }
+          row -= 2; col += 2;
+        } while ((row >= 0) && (col < ncol));
+        row += 1; col += 3;
+        do {
+          if ((row >= 0) && (col < ncol) && (map[row * ncol + col] === -1)) {
+            utah(row, col, chr++);
+          }
+          row += 2; col -= 2;
+        } while ((row < nrow) && (col >= 0));
+        row += 3; col += 1;
+      } while ((row < nrow) || (col < ncol));
+
+      if (map[nrow * ncol - 1] === -1) {
+        map[nrow * ncol - 1] = 1;
+        map[(nrow - 1) * ncol - 2] = 1;
+      }
+
+      const grid = [];
+      for (let r = 0; r < spec.rows; r++) {
+        const line = new Uint8Array(spec.cols);
+        for (let c = 0; c < spec.cols; c++) {
+          if (r === spec.rows - 1 || c === 0) {
+            line[c] = 1;
+          } else if (r === 0) {
+            line[c] = (c % 2 === 0) ? 1 : 0;
+          } else if (c === spec.cols - 1) {
+            line[c] = (r % 2 === 1) ? 1 : 0;
+          } else {
+            const val = map[(r - 1) * ncol + (c - 1)];
+            line[c] = val === 1 ? 1 : 0;
+          }
+        }
+        grid.push(line);
+      }
+      return grid;
+    }
+
+    function generateQRGrid(text) {
+      if (typeof qrcode === 'function') {
+        try {
+          const qr = qrcode(0, 'L');
+          qr.addData(text || '0');
+          qr.make();
+          const count = qr.getModuleCount();
+          const grid = [];
+          for (let r = 0; r < count; r++) {
+            const line = new Uint8Array(count);
+            for (let c = 0; c < count; c++) {
+              line[c] = qr.isDark(r, c) ? 1 : 0;
+            }
+            grid.push(line);
+          }
+          return grid;
+        } catch (e) {}
+      }
+      return generateDataMatrixGrid(text);
+    }
+
+    const CODE128_PATTERNS = [
+      "11011001100","11001101100","11001100110","10010011000","10010001100","10001001100","10011001000","10011000100",
+      "10001100100","11001001000","11001000100","11000100100","10110011100","10011011100","10011001110","10111001100",
+      "10011101100","10011100110","11001110010","11001011100","11001001110","11011100100","11001110100","11101101110",
+      "11101001100","11100101100","11100100110","11101100100","11100110100","11100110010","11011011000","11011000110",
+      "11000110110","10100011000","10001011000","10001000110","10110001000","10001101000","10001100010","11010001000",
+      "11000101000","11000100010","10110111000","10110001110","10001101110","10111011000","10111000110","10001110110",
+      "11101110110","11010001110","11000101110","11011101000","11011100010","11011101110","11101011000","11101000110",
+      "11100010110","11101101000","11101100010","11100011010","11101111010","11001000010","11110001010","10100110000",
+      "10100001100","10010110000","10010000110","10000101100","10000100110","10110010000","10110000100","10011010000",
+      "10011000010","10000110100","10000110010","11000010010","11001010000","11110111010","11000010100","10001111010",
+      "10100111100","10010111100","10010011110","10111100100","10011110100","10011110010","11110100100","11110010100",
+      "11110010010","11011011110","11011110110","11110110110","10101111000","10100011110","10001011110","10111101000",
+      "10111100010","11110101000","11110100010","10111011110","10111101110","11101011110","11110101110","11010000100",
+      "11010010000","11010011100","1100011101011"
+    ];
+
+    function generateCode128Bars(text) {
+      const clean = (text || '0').replace(/[^\x20-\x7E]/g, '');
+      const codes = [104];
+      let checksum = 104;
+      for (let i = 0; i < clean.length; i++) {
+        const val = clean.charCodeAt(i) - 32;
+        codes.push(val);
+        checksum += val * (i + 1);
+      }
+      codes.push(checksum % 103);
+      codes.push(106);
+      let bits = '';
+      for (const c of codes) bits += CODE128_PATTERNS[c];
+      return bits;
+    }
+
+    // =========================================================================
+    // 2. BITMAP PIXEL FONT (5x7 Crisp Monochrome)
+    // =========================================================================
+    const FONT_5X7 = {
+      ' ': [0x00,0x00,0x00,0x00,0x00],
+      '#': [0x14,0x7F,0x14,0x7F,0x14],
+      '-': [0x08,0x08,0x08,0x08,0x08],
+      '.': [0x00,0x60,0x60,0x00,0x00],
+      '/': [0x20,0x10,0x08,0x04,0x02],
+      ':': [0x00,0x36,0x36,0x00,0x00],
+      '_': [0x40,0x40,0x40,0x40,0x40],
+      '0': [0x3E,0x51,0x49,0x45,0x3E],
+      '1': [0x00,0x42,0x7F,0x40,0x00],
+      '2': [0x42,0x61,0x51,0x49,0x46],
+      '3': [0x21,0x41,0x45,0x4B,0x31],
+      '4': [0x18,0x14,0x12,0x7F,0x10],
+      '5': [0x27,0x45,0x45,0x45,0x39],
+      '6': [0x3C,0x4A,0x49,0x49,0x30],
+      '7': [0x01,0x71,0x09,0x05,0x03],
+      '8': [0x36,0x49,0x49,0x49,0x36],
+      '9': [0x06,0x49,0x49,0x29,0x1E],
+      'A': [0x7E,0x11,0x11,0x11,0x7E],
+      'B': [0x7F,0x49,0x49,0x49,0x36],
+      'C': [0x3E,0x41,0x41,0x41,0x22],
+      'D': [0x7F,0x41,0x41,0x22,0x1C],
+      'E': [0x7F,0x49,0x49,0x49,0x41],
+      'F': [0x7F,0x09,0x09,0x09,0x01],
+      'G': [0x3E,0x41,0x49,0x49,0x7A],
+      'H': [0x7F,0x08,0x08,0x08,0x7F],
+      'I': [0x00,0x41,0x7F,0x41,0x00],
+      'J': [0x20,0x40,0x41,0x3F,0x01],
+      'K': [0x7F,0x08,0x14,0x22,0x41],
+      'L': [0x7F,0x40,0x40,0x40,0x40],
+      'M': [0x7F,0x02,0x0C,0x02,0x7F],
+      'N': [0x7F,0x04,0x08,0x10,0x7F],
+      'O': [0x3E,0x41,0x41,0x41,0x3E],
+      'P': [0x7F,0x09,0x09,0x09,0x06],
+      'Q': [0x3E,0x41,0x51,0x21,0x5E],
+      'R': [0x7F,0x09,0x19,0x29,0x46],
+      'S': [0x46,0x49,0x49,0x49,0x31],
+      'T': [0x01,0x01,0x7F,0x01,0x01],
+      'U': [0x3F,0x40,0x40,0x40,0x3F],
+      'V': [0x1F,0x20,0x40,0x20,0x1F],
+      'W': [0x3F,0x40,0x38,0x40,0x3F],
+      'X': [0x63,0x14,0x08,0x14,0x63],
+      'Y': [0x07,0x08,0x70,0x08,0x07],
+      'Z': [0x61,0x51,0x49,0x45,0x43]
+    };
+
+    function drawBitmapText(ctx, text, x, y, scale = 2) {
+      const str = (text || '').toUpperCase();
+      let curX = x;
+      ctx.fillStyle = '#000000';
+      for (let i = 0; i < str.length; i++) {
+        const ch = str[i];
+        const glyph = FONT_5X7[ch] || FONT_5X7[' '];
+        for (let col = 0; col < 5; col++) {
+          const colBits = glyph[col];
+          for (let row = 0; row < 7; row++) {
+            if ((colBits >> row) & 1) {
+              ctx.fillRect(curX + col * scale, y + row * scale, scale, scale);
+            }
+          }
+        }
+        curX += 6 * scale;
+      }
+      return curX - x;
+    }
+
+    function measureBitmapText(text, scale = 2) {
+      const len = (text || '').length;
+      return len > 0 ? len * 6 * scale - scale : 0;
+    }
+
+    // =========================================================================
+    // 3. STATE & RENDERING PIPELINE (64px HEIGHT STRICT 1-BIT)
+    // =========================================================================
+    const state = {
+      symbology: 'datamatrix',
+      moduleScale: 'auto',
+      layout: 'side',
+      gapPx: 18,
+      cutMarks: 'dashed',
+      flipY: false, // false = Normal right-side-up on physical PT-P300BT
+      zoom: 3,
+      darkTape: false,
+      lastRasterColumns: []
+    };
+
+    function showToast(msg) {
+      const banner = document.getElementById('toastBanner');
+      const text = document.getElementById('toastMessage');
+      text.textContent = msg;
+      banner.classList.remove('hidden');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => banner.classList.add('hidden'), 5000);
+    }
+
+    function parseBatchLines() {
+      const raw = document.getElementById('batchInput').value || '';
+      const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length === 0) {
+        return [{ code: 'IT-001', title: 'ITEM', subtitle: '' }];
+      }
+      return lines.map(line => {
+        const parts = line.split('|').map(p => p.trim());
+        return {
+          code: parts[0] || 'IT-001',
+          title: parts[1] || parts[0] || '',
+          subtitle: parts[2] || ''
+        };
+      });
+    }
+
+    function buildRelativeApiQueryString() {
+      const items = parseBatchLines().map(it => `${it.code}|${it.title}|${it.subtitle}`).join(';');
+      const params = new URLSearchParams();
+      params.set('sym', state.symbology);
+      params.set('scale', state.moduleScale);
+      params.set('layout', state.layout);
+      params.set('gap', String(state.gapPx));
+      params.set('cut', state.cutMarks);
+      if (state.flipY) params.set('flipY', '1');
+      params.set('items', items);
+      return '?' + params.toString();
+    }
+
+    function renderSingleLabelToCanvas(item) {
+      const off = document.createElement('canvas');
+      off.height = 64;
+      const ctx = off.getContext('2d');
+
+      let codeWidth = 0;
+      let usedHeight = 0;
+      let chosenScale = 4;
+
+      if (state.symbology === 'code128') {
+        const bits = generateCode128Bars(item.code);
+        chosenScale = state.moduleScale === 'auto' ? 2 : Math.min(3, parseInt(state.moduleScale, 10));
+        const quietPx = 10;
+        codeWidth = quietPx * 2 + bits.length * chosenScale;
+        usedHeight = 56;
+
+        const textWidth = state.layout === 'side'
+          ? Math.max(measureBitmapText(item.code, 2), measureBitmapText(item.title, 2)) + 16
+          : 0;
+        off.width = codeWidth + textWidth;
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, off.width, 64);
+        ctx.fillStyle = '#000000';
+
+        for (let i = 0; i < bits.length; i++) {
+          if (bits[i] === '1') {
+            ctx.fillRect(quietPx + i * chosenScale, 4, chosenScale, 40);
+          }
+        }
+        drawBitmapText(ctx, item.code, quietPx + 4, 48, 2);
+
+        if (state.layout === 'side' && textWidth > 0) {
+          drawBitmapText(ctx, item.title.slice(0, 12), codeWidth + 6, 12, 2);
+          if (item.subtitle) {
+            drawBitmapText(ctx, item.subtitle.slice(0, 14), codeWidth + 6, 36, 2);
+          }
+        }
+      } else {
+        const grid = state.symbology === 'qr'
+          ? generateQRGrid(item.code)
+          : generateDataMatrixGrid(item.code);
+        const rows = grid.length;
+        const cols = grid[0].length;
+
+        if (state.moduleScale === 'auto') {
+          chosenScale = Math.max(1, Math.floor(60 / rows));
+          if (rows === 21 && chosenScale < 3) chosenScale = 3;
+        } else {
+          chosenScale = parseInt(state.moduleScale, 10);
+          if (rows * chosenScale > 64) {
+            chosenScale = Math.max(1, Math.floor(64 / rows));
+          }
+        }
+
+        const matrixH = rows * chosenScale;
+        const matrixW = cols * chosenScale;
+        usedHeight = matrixH;
+        const quietLeft = 8;
+        const quietRight = 8;
+        const topY = Math.floor((64 - matrixH) / 2);
+
+        let textBlockW = 0;
+        if (state.layout === 'side') {
+          const line1W = measureBitmapText(item.code, 2);
+          const line2W = measureBitmapText(item.title, 2);
+          const line3W = measureBitmapText(item.subtitle, 1);
+          textBlockW = Math.max(line1W, line2W, line3W) + 14;
+        } else if (state.layout === 'compact') {
+          textBlockW = measureBitmapText(item.code, 2) + 12;
+        }
+
+        off.width = quietLeft + matrixW + quietRight + textBlockW;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, off.width, 64);
+        ctx.fillStyle = '#000000';
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            if (grid[r][c]) {
+              ctx.fillRect(quietLeft + c * chosenScale, topY + r * chosenScale, chosenScale, chosenScale);
+            }
+          }
+        }
+
+        const textStartX = quietLeft + matrixW + quietRight;
+        if (state.layout === 'side') {
+          drawBitmapText(ctx, item.code, textStartX, 6, 2);
+          if (item.title) {
+            drawBitmapText(ctx, item.title.slice(0, 14), textStartX, 26, 2);
+          }
+          if (item.subtitle) {
+            drawBitmapText(ctx, item.subtitle.slice(0, 22), textStartX, 46, 1);
+          }
+        } else if (state.layout === 'compact') {
+          drawBitmapText(ctx, item.code, textStartX, 25, 2);
+        }
+      }
+
+      return { canvas: off, usedHeight, chosenScale };
+    }
+
+    function renderStrip() {
+      const items = parseBatchLines();
+      const rendered = items.map(renderSingleLabelToCanvas);
+      const gap = Math.max(8, Math.min(64, parseInt(document.getElementById('gapPxInput').value || '18', 10)));
+      state.gapPx = gap;
+      state.cutMarks = document.getElementById('cutMarksToggle').value;
+      state.flipY = document.getElementById('flipYSelect').value === 'mirrored';
+
+      const totalWidth = rendered.reduce((acc, r) => acc + r.canvas.width, 0) + (rendered.length - 1) * gap + 16;
+      const nativeCanvas = document.getElementById('nativeCanvas');
+      nativeCanvas.width = totalWidth;
+      nativeCanvas.height = 64;
+      const nCtx = nativeCanvas.getContext('2d');
+
+      nCtx.fillStyle = '#FFFFFF';
+      nCtx.fillRect(0, 0, totalWidth, 64);
+
+      let curX = 8;
+      rendered.forEach((r, idx) => {
+        nCtx.drawImage(r.canvas, curX, 0);
+        curX += r.canvas.width;
+
+        if (idx < rendered.length - 1) {
+          const midX = curX + Math.floor(gap / 2);
+          nCtx.fillStyle = '#000000';
+          if (state.cutMarks === 'dashed') {
+            for (let y = 0; y < 64; y += 6) {
+              nCtx.fillRect(midX, y, 1, 3);
+            }
+          } else if (state.cutMarks === 'ticks') {
+            nCtx.fillRect(midX, 0, 2, 6);
+            nCtx.fillRect(midX, 58, 2, 6);
+          }
+          curX += gap;
+        }
+      });
+
+      const imgData = nCtx.getImageData(0, 0, totalWidth, 64);
+      const d = imgData.data;
+      const rasterCols = [];
+
+      for (let x = 0; x < totalWidth; x++) {
+        const colBytes = new Uint8Array(16);
+        for (let y = 0; y < 64; y++) {
+          const idx = (y * totalWidth + x) * 4;
+          const isBlack = d[idx] < 128;
+          const val = isBlack ? 0 : 255;
+          d[idx] = val; d[idx + 1] = val; d[idx + 2] = val; d[idx + 3] = 255;
+
+          if (isBlack) {
+            // FIXED in v1.1: bitPos = 32 + y prints right-side-up as the tape feeds out!
+            const bitPos = state.flipY ? (32 + (63 - y)) : (32 + y);
+            const byteIdx = Math.floor(bitPos / 8);
+            const bitOffset = 7 - (bitPos % 8);
+            colBytes[byteIdx] |= (1 << bitOffset);
+          }
+        }
+        rasterCols.push(colBytes);
+      }
+      nCtx.putImageData(imgData, 0, 0);
+      state.lastRasterColumns = rasterCols;
+
+      const previewCanvas = document.getElementById('previewCanvas');
+      const z = state.zoom;
+      previewCanvas.width = totalWidth * z;
+      previewCanvas.height = 64 * z;
+      const pCtx = previewCanvas.getContext('2d');
+      pCtx.imageSmoothingEnabled = false;
+
+      if (state.darkTape) {
+        pCtx.fillStyle = '#0f172a';
+        pCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+        for (let x = 0; x < totalWidth; x++) {
+          for (let y = 0; y < 64; y++) {
+            const idx = (y * totalWidth + x) * 4;
+            if (d[idx] === 0) {
+              pCtx.fillStyle = '#f8fafc';
+              pCtx.fillRect(x * z, y * z, z, z);
+            }
+          }
+        }
+        document.getElementById('tapeSimulationBox').className = 'inline-block bg-slate-900 p-2 rounded shadow-inner border-y-4 border-slate-700';
+      } else {
+        pCtx.drawImage(nativeCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
+        document.getElementById('tapeSimulationBox').className = 'inline-block bg-white p-2 rounded shadow-inner border-y-4 border-slate-300';
+      }
+
+      const first = rendered[0] || { usedHeight: 48, chosenScale: 4 };
+      const lengthMm = ((totalWidth / 180) * 25.4).toFixed(1);
+      const pitchMm = ((first.chosenScale / 180) * 25.4).toFixed(2);
+      const savedMm = Math.max(0, (items.length - 1) * 24);
+
+      document.getElementById('gridBadge').textContent = `${first.chosenScale}×${first.chosenScale} px/module`;
+      document.getElementById('stripStatsText').textContent = `64 px × ${totalWidth} px (${lengthMm} mm total strip)`;
+      document.getElementById('metricHeadUsage').textContent = `${first.usedHeight} / 64 dots`;
+      document.getElementById('metricModuleMm').textContent = `${pitchMm} mm/mod`;
+      document.getElementById('metricTapeSaved').textContent = `${savedMm} mm saved`;
+
+      const qs = buildRelativeApiQueryString();
+      document.getElementById('liveApiUrlPreview').textContent = qs;
+
+      updateHexAndPythonViews(totalWidth, rasterCols);
+    }
+
+    // =========================================================================
+    // 4. BROTHER PT-P300BT PTCBP RASTER PACKET BUILDER & PYTHON GENERATOR
+    // =========================================================================
+    function buildBrotherPTCBPPayload(rasterCols) {
+      const chunks = [];
+      chunks.push(new Uint8Array(100));
+      chunks.push(new Uint8Array([0x1B, 0x40]));
+      chunks.push(new Uint8Array([0x1B, 0x69, 0x61, 0x01]));
+      const nLines = rasterCols.length;
+      chunks.push(new Uint8Array([
+        0x1B, 0x69, 0x7A, 0x84, 0x00, 0x0C, 0x00,
+        nLines & 0xFF, (nLines >> 8) & 0xFF, (nLines >> 16) & 0xFF, (nLines >> 24) & 0xFF,
+        0x00, 0x00
+      ]));
+      chunks.push(new Uint8Array([0x1B, 0x69, 0x4D, 0x00]));
+      chunks.push(new Uint8Array([0x1B, 0x69, 0x64, 0x00, 0x00]));
+      chunks.push(new Uint8Array([0x4D, 0x00]));
+
+      for (const col of rasterCols) {
+        const linePkt = new Uint8Array(19);
+        linePkt[0] = 0x47;
+        linePkt[1] = 0x10;
+        linePkt[2] = 0x00;
+        linePkt.set(col, 3);
+        chunks.push(linePkt);
+      }
+
+      chunks.push(new Uint8Array([0x1A]));
+
+      const totalLen = chunks.reduce((a, b) => a + b.length, 0);
+      const out = new Uint8Array(totalLen);
+      let offset = 0;
+      for (const c of chunks) {
+        out.set(c, offset);
+        offset += c.length;
+      }
+      return out;
+    }
+
+    function updateHexAndPythonViews(totalWidth, rasterCols) {
+      document.getElementById('packetLengthBadge').textContent = `${totalWidth} raster columns (${totalWidth * 16} raw raster bytes)`;
+      
+      const previewLines = [];
+      previewLines.push(`# Header: [00 x 100] -> 1B 40 (Init) -> 1B 69 61 01 (PTCBP Raster) -> 1B 69 7A ... (12mm TZe, ${totalWidth} cols)`);
+      let shown = 0;
+      for (let i = 0; i < rasterCols.length && shown < 6; i++) {
+        const col = rasterCols[i];
+        const hasInk = col.some(b => b !== 0);
+        if (hasInk || i === 0) {
+          const hex = Array.from(col).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+          previewLines.push(`Col ${String(i).padStart(3, '0')}: 47 10 00 | ${hex}`);
+          shown++;
+        }
+      }
+      document.getElementById('hexPreviewBox').textContent = previewLines.join('\n');
+
+      const hexRows = rasterCols.map(c => Array.from(c).map(b => b.toString(16).padStart(2, '0')).join('')).join('\n');
+      const pyScript = `#!/usr/bin/env python3
+"""
+CubeTag64 — Direct Bluetooth Classic (SPP/RFCOMM) Printer Script for Brother PT-P300BT
+Motherboard: MBH7BTZ42A-100101 | 180 DPI | 64 Printable Dots Centered in 128-bit Raster (Y-Axis Corrected)
+Usage:
+  pip install pyserial
+  python print_p300bt.py COM5           # Windows (check Outgoing Bluetooth COM port)
+  python print_p300bt.py /dev/rfcomm0   # Linux
+"""
+import sys
+import time
+import serial
+
+RASTER_HEX_COLUMNS = """
+${hexRows}
+""".strip().splitlines()
+
+def build_ptcbp_job(columns_hex, chain_no_feed=True):
+    n_lines = len(columns_hex)
+    buf = bytearray()
+    buf.extend(b'\\x00' * 100)
+    buf.extend(b'\\x1b\\x40')
+    buf.extend(b'\\x1b\\x69\\x61\\x01')
+    buf.extend(b'\\x1b\\x69\\x7a\\x84\\x00\\x0c\\x00')
+    buf.extend(n_lines.to_bytes(4, 'little'))
+    buf.extend(b'\\x00\\x00')
+    buf.extend(b'\\x1b\\x69\\x4d' + (b'\\x00' if chain_no_feed else b'\\x40'))
+    buf.extend(b'\\x1b\\x69\\x64\\x00\\x00')
+    buf.extend(b'\\x4d\\x00')
+    for col_hex in columns_hex:
+        raw16 = bytes.fromhex(col_hex)
+        buf.extend(b'\\x47\\x10\\x00' + raw16)
+    buf.extend(b'\\x0c' if chain_no_feed else b'\\x1a')
+    return bytes(buf)
+
+if __name__ == '__main__':
+    port = sys.argv[1] if len(sys.argv) > 1 else 'COM5'
+    chain = '--feed' not in sys.argv
+    payload = build_ptcbp_job(RASTER_HEX_COLUMNS, chain_no_feed=chain)
+    print(f"Connecting to Brother PT-P300BT on {port} ({len(RASTER_HEX_COLUMNS)} columns)...")
+    with serial.Serial(port, baudrate=9600, timeout=5) as ser:
+        ser.write(payload)
+        ser.flush()
+        time.sleep(1.5)
+    print("Done! Sent 1-bit pixel-aligned inventory strip.")
+`;
+      document.getElementById('pythonCodeBox').textContent = pyScript;
+    }
+
+    // =========================================================================
+    // 5. URL PARAMETER API PARSER & POSTMESSAGE HANDLER (FOR GITHUB PAGES)
+    // =========================================================================
+    function applyUrlParameters(searchString) {
+      const rawQuery = searchString !== undefined
+        ? searchString
+        : (window.location.search || window.location.hash.replace(/^#\/?\??/, ''));
+      if (!rawQuery) return false;
+      const params = new URLSearchParams(rawQuery);
+      let applied = false;
+
+      if (params.has('sym')) {
+        const s = params.get('sym').toLowerCase();
+        if (['datamatrix', 'qr', 'code128'].includes(s)) {
+          state.symbology = s;
+          document.querySelectorAll('.sym-btn').forEach(b => {
+            const active = b.getAttribute('data-sym') === state.symbology;
+            b.className = active
+              ? 'sym-btn p-2.5 rounded-lg border border-amber-500 bg-amber-500/10 text-left transition'
+              : 'sym-btn p-2.5 rounded-lg border border-slate-700 bg-slate-800/50 hover:border-slate-600 text-left transition';
+          });
+          applied = true;
+        }
+      }
+      if (params.has('scale')) {
+        const sc = params.get('scale');
+        if (['auto', '2', '3', '4', '5'].includes(sc)) {
+          state.moduleScale = sc;
+          document.getElementById('moduleScaleSelect').value = sc;
+          applied = true;
+        }
+      }
+      if (params.has('layout')) {
+        const lay = params.get('layout');
+        if (['side', 'compact', 'codeonly'].includes(lay)) {
+          state.layout = lay;
+          document.getElementById('layoutSelect').value = lay;
+          applied = true;
+        }
+      }
+      if (params.has('gap')) {
+        const g = parseInt(params.get('gap'), 10);
+        if (!isNaN(g) && g >= 8 && g <= 64) {
+          document.getElementById('gapPxInput').value = String(g);
+          applied = true;
+        }
+      }
+      if (params.has('cut')) {
+        const c = params.get('cut');
+        if (['dashed', 'ticks', 'none'].includes(c)) {
+          document.getElementById('cutMarksToggle').value = c;
+          applied = true;
+        }
+      }
+      if (params.has('flipY')) {
+        const fy = params.get('flipY');
+        document.getElementById('flipYSelect').value = (fy === '1' || fy === 'true' || fy === 'mirrored') ? 'mirrored' : 'normal';
+        applied = true;
+      }
+
+      if (params.has('items')) {
+        const rows = params.get('items').split(';').map(s => s.trim()).filter(Boolean);
+        if (rows.length > 0) {
+          document.getElementById('batchInput').value = rows.map(r => r.split('|').map(p => p.trim()).join(' | ')).join('\n');
+          applied = true;
+        }
+      } else if (params.has('code')) {
+        const code = params.get('code') || 'IT-001';
+        const title = params.get('title') || code;
+        const sub = params.get('sub') || '';
+        document.getElementById('batchInput').value = `${code} | ${title} | ${sub}`;
+        applied = true;
+      }
+
+      if (applied) {
+        document.getElementById('apiActiveBadge').classList.remove('hidden');
+        renderStrip();
+      }
+
+      const action = params.get('action');
+      if (action === 'png') {
+        setTimeout(() => document.getElementById('downloadPngBtn').click(), 150);
+      } else if (action === 'py') {
+        setTimeout(() => document.getElementById('downloadPythonBtn').click(), 150);
+      } else if (action === 'rawimg') {
+        const dataUrl = document.getElementById('nativeCanvas').toDataURL('image/png');
+        document.body.innerHTML = `<div style="background:#0f172a;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;"><img src="${dataUrl}" style="image-rendering:pixelated;border:4px solid #fff;background:#fff;" alt="CubeTag64 Strip"></div>`;
+      }
+      return applied;
+    }
+
+    window.addEventListener('message', (ev) => {
+      if (ev.data && ev.data.type === 'CUBETAG64_RENDER') {
+        const p = new URLSearchParams(ev.data);
+        applyUrlParameters(p.toString());
+        const pngDataUrl = document.getElementById('nativeCanvas').toDataURL('image/png');
+        if (ev.source) {
+          ev.source.postMessage({
+            type: 'CUBETAG64_RESULT',
+            pngDataUrl,
+            width: document.getElementById('nativeCanvas').width,
+            height: 64
+          }, '*');
+        }
+      }
+    });
+
+    // =========================================================================
+    // 6. EVENT LISTENERS & UI CONTROLS
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      const tabs = [
+        { btn: 'tabBtnDesigner', view: 'viewDesigner' },
+        { btn: 'tabBtnApi',      view: 'viewApi' },
+        { btn: 'tabBtnHardware', view: 'viewHardware' },
+        { btn: 'tabBtnPython',   view: 'viewPython' }
+      ];
+      function switchTab(targetBtnId) {
+        tabs.forEach(other => {
+          const isActive = other.btn === targetBtnId;
+          document.getElementById(other.view).classList.toggle('hidden', !isActive);
+          const b = document.getElementById(other.btn);
+          b.className = isActive
+            ? 'px-3 py-1.5 rounded-md text-xs font-medium bg-amber-500 text-slate-950 transition'
+            : 'px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition';
+        });
+      }
+      tabs.forEach(t => {
+        document.getElementById(t.btn).addEventListener('click', () => switchTab(t.btn));
+      });
+      document.getElementById('openApiTabQuickBtn').addEventListener('click', () => switchTab('tabBtnApi'));
+
+      document.querySelectorAll('.sym-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.symbology = btn.getAttribute('data-sym');
+          document.querySelectorAll('.sym-btn').forEach(b => {
+            const active = b.getAttribute('data-sym') === state.symbology;
+            b.className = active
+              ? 'sym-btn p-2.5 rounded-lg border border-amber-500 bg-amber-500/10 text-left transition'
+              : 'sym-btn p-2.5 rounded-lg border border-slate-700 bg-slate-800/50 hover:border-slate-600 text-left transition';
+          });
+          renderStrip();
+        });
+      });
+
+      ['moduleScaleSelect', 'layoutSelect', 'batchInput', 'gapPxInput', 'cutMarksToggle', 'flipYSelect'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          state.moduleScale = document.getElementById('moduleScaleSelect').value;
+          state.layout = document.getElementById('layoutSelect').value;
+          renderStrip();
+        });
+      });
+
+      document.getElementById('zoomRange').addEventListener('input', (e) => {
+        state.zoom = parseInt(e.target.value, 10) || 3;
+        document.getElementById('zoomValueLabel').textContent = `${state.zoom}×`;
+        renderStrip();
+      });
+
+      document.getElementById('invertPreviewBtn').addEventListener('click', (e) => {
+        state.darkTape = !state.darkTape;
+        e.currentTarget.textContent = state.darkTape
+          ? 'Tape: Black (TZe-335)'
+          : 'Tape: White (TZe-231)';
+        renderStrip();
+      });
+
+      document.getElementById('presetToolsBtn').addEventListener('click', () => {
+        document.getElementById('batchInput').value = [
+          'IT-001 | USB-C PD | 100W 2m',
+          'IT-002 | RJ45 CAT6 | Patch 1.5m',
+          'TL-014 | TORX T8 | Precision',
+          'PT-089 | ESP32-S3 | DevKitC-1'
+        ].join('\n');
+        renderStrip();
+        showToast('Loaded sample IT cables, parts, and precision tools.');
+      });
+
+      let seqCounter = 100;
+      document.getElementById('autoSeqBtn').addEventListener('click', () => {
+        const lines = [];
+        for (let i = 0; i < 5; i++) {
+          lines.push(`BAG-${seqCounter++} | PART#${seqCounter} | BIN-A`);
+        }
+        const box = document.getElementById('batchInput');
+        box.value = (box.value.trim() ? box.value.trim() + '\n' : '') + lines.join('\n');
+        renderStrip();
+        showToast('Appended 5 sequential inventory bag IDs to the strip.');
+      });
+
+      function copyParameterizedUrl() {
+        const base = window.location.origin && window.location.origin !== 'null'
+          ? window.location.origin + window.location.pathname
+          : 'https://<your-username>.github.io/cubetag64/';
+        const fullUrl = base + buildRelativeApiQueryString();
+        const ta = document.createElement('textarea');
+        ta.value = fullUrl;
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('Copied parameterized API URL to clipboard!');
+        } catch (e) {
+          showToast(fullUrl);
+        }
+        ta.remove();
+      }
+
+      document.getElementById('copyShareUrlBtn').addEventListener('click', copyParameterizedUrl);
+      document.getElementById('copyCurrentApiUrlBtn').addEventListener('click', copyParameterizedUrl);
+
+      document.getElementById('testSingleUrlParamBtn').addEventListener('click', () => {
+        applyUrlParameters('?code=HBX-409&title=SATA+SSD&sub=DRAWER-3&sym=datamatrix');
+        switchTab('tabBtnDesigner');
+        showToast('Simulated URL API call: ?code=HBX-409&title=SATA+SSD&sub=DRAWER-3');
+      });
+
+      document.getElementById('downloadPngBtn').addEventListener('click', () => {
+        const nativeCanvas = document.getElementById('nativeCanvas');
+        const url = nativeCanvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cubetag64_${state.symbology}_strip.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showToast('Downloaded exact 64px-tall 1-bit PNG strip.');
+      });
+
+      document.getElementById('webSerialPrintBtn').addEventListener('click', async () => {
+        if (!('serial' in navigator)) {
+          showToast('Web Serial API requires desktop Chrome/Edge on GitHub Pages or localhost. Use the "3. Python Direct Printer" tab or download the PNG!');
+          return;
+        }
+        try {
+          const port = await navigator.serial.requestPort();
+          await port.open({ baudRate: 9600 });
+          const writer = port.writable.getWriter();
+          const payload = buildBrotherPTCBPPayload(state.lastRasterColumns);
+          await writer.write(payload);
+          writer.releaseLock();
+          await port.close();
+          showToast('Sent PTCBP raster strip to PT-P300BT over Bluetooth Serial!');
+        } catch (err) {
+          showToast(`Bluetooth Serial notice: ${err.message || 'Check pairing or use the Python Direct Printer tab.'}`);
+        }
+      });
+
+      document.getElementById('copyPythonBtn').addEventListener('click', () => {
+        const code = document.getElementById('pythonCodeBox').textContent;
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('Copied standalone Python PT-P300BT driver script to clipboard!');
+        } catch (e) {
+          showToast('Select and copy the script from the code box.');
+        }
+        ta.remove();
+      });
+
+      document.getElementById('downloadPythonBtn').addEventListener('click', () => {
+        const code = document.getElementById('pythonCodeBox').textContent;
+        const blob = new Blob([code], { type: 'text/x-python' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'print_p300bt.py';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        showToast('Downloaded print_p300bt.py with your embedded 64px strip.');
+      });
+
+      document.getElementById('toastCloseBtn').addEventListener('click', () => {
+        document.getElementById('toastBanner').classList.add('hidden');
+      });
+
+      // Render default or URL-parameterized strip
+      if (!applyUrlParameters()) {
+        renderStrip();
+      }
+    });
+  </script>
+</body>
+</html>
