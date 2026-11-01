@@ -61,16 +61,16 @@
       <!-- Navigation Tabs -->
       <nav class="flex flex-wrap items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700/70">
         <button id="tabBtnDesigner" class="px-3 py-1.5 rounded-md text-xs font-medium bg-amber-500 text-slate-950 transition">
-          1. Tag &amp; Strip Designer
+          Tag Studio
         </button>
         <button id="tabBtnApi" class="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">
-          4. GitHub Pages URL API
-        </button>
-        <button id="tabBtnHardware" class="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">
-          2. PCB &amp; Bluetooth Protocol
+          URL API
         </button>
         <button id="tabBtnPython" class="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">
-          3. Python Direct Printer
+          Python CLI
+        </button>
+        <button id="tabBtnHardware" class="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white transition">
+          Hardware &amp; Protocol
         </button>
       </nav>
     </div>
@@ -137,18 +137,18 @@
         </div>
 
         <!-- Single or Batch Inventory Items Card -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3.5">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Inventory Payload (Chain Strip)</h2>
+            <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Inventory Strip Payload</h2>
             <div class="flex flex-wrap gap-1.5">
               <button id="presetToolsBtn" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="Load IT & Tools sample">
                 IT/Tools
               </button>
-              <button id="presetHomeboxBtn" class="text-[11px] px-2 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition" title="Simulate Homebox CSV import">
-                Homebox Preset
+              <button id="presetHomeboxBtn" class="text-[11px] px-2 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition" title="Load Homebox sample">
+                Homebox
               </button>
-              <button id="presetSnipeBtn" class="text-[11px] px-2 py-1 rounded bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 transition" title="Simulate Snipe-IT CSV import">
-                Snipe-IT Preset
+              <button id="presetSnipeBtn" class="text-[11px] px-2 py-1 rounded bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 transition" title="Load Snipe-IT sample">
+                Snipe-IT
               </button>
               <button id="autoSeqBtn" class="text-[11px] px-2 py-1 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition">
                 +5 Seq
@@ -156,42 +156,34 @@
             </div>
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
-            The PT-P300BT cutter sits <strong>24mm</strong> away from the printhead. Enter multiple tags below (`CODE | TITLE | SUBTITLE`), drag &amp; drop a <strong>Homebox / Snipe-IT CSV</strong>, or pass `?items=...` via URL.
-          </p>
-
           <!-- Drag & Drop CSV Import Bar -->
-          <div id="csvDropZone" class="border border-dashed border-slate-700 hover:border-amber-500/60 bg-slate-950/70 rounded-lg p-2.5 transition flex flex-wrap items-center justify-between gap-2 cursor-pointer">
+          <div id="csvDropZone" class="border border-dashed border-slate-700 hover:border-amber-500/60 bg-slate-950/70 rounded-lg p-2 transition flex flex-wrap items-center justify-between gap-2 cursor-pointer">
             <div class="flex items-center gap-2">
-              <span class="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 mono">CSV</span>
-              <span id="csvStatusLabel" class="text-xs text-slate-300">Drop <strong>Homebox</strong> / <strong>Snipe-IT</strong> `.csv` here or click to browse</span>
+              <span class="text-[11px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 mono">CSV</span>
+              <span id="csvStatusLabel" class="text-xs text-slate-300">Drop <strong>Homebox / Snipe-IT</strong> `.csv` or click to import</span>
             </div>
             <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
               <select id="csvPresetSelect" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-[11px] text-slate-200 focus:outline-none focus:border-amber-500" title="CSV column mapping preset">
-                <option value="auto" selected>Auto-Detect Columns</option>
-                <option value="homebox">Homebox CSV</option>
-                <option value="snipeit">Snipe-IT CSV</option>
-                <option value="grocy">Grocy / Shelf CSV</option>
+                <option value="auto" selected>Auto-Detect</option>
+                <option value="homebox">Homebox</option>
+                <option value="snipeit">Snipe-IT</option>
+                <option value="grocy">Grocy / Shelf</option>
               </select>
               <input id="csvFileInput" type="file" accept=".csv,.tsv,.txt" class="hidden">
             </div>
           </div>
 
           <div>
-            <textarea id="batchInput" rows="5" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs mono text-emerald-300 focus:outline-none focus:border-amber-500 leading-relaxed" spellcheck="false">IT-001 | USB-C PD | 100W 2m
+            <textarea id="batchInput" rows="5" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs mono text-emerald-300 focus:outline-none focus:border-amber-500 leading-relaxed" spellcheck="false" placeholder="CODE | TITLE | SUBTITLE">IT-001 | USB-C PD | 100W 2m
 IT-002 | RJ45 CAT6 | Patch 1.5m
 TL-014 | TORX T8 | Precision
 PT-089 | ESP32-S3 | DevKitC-1</textarea>
           </div>
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div class="grid grid-cols-2 gap-3">
             <div>
               <label for="gapPxInput" class="block text-xs text-slate-400 mb-1">Cut Gap (px)</label>
               <input id="gapPxInput" type="number" min="8" max="64" step="2" value="18" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white mono">
-            </div>
-            <div>
-              <label for="overfeedMmInput" class="block text-xs text-amber-300 mb-1" title="Extra blank feed at the end of the strip so the manual cutter (24mm past printhead) does not slice the last tag in half">End Overfeed (mm)</label>
-              <input id="overfeedMmInput" type="number" min="0" max="45" step="1" value="24" class="w-full bg-slate-800 border border-amber-500/40 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 mono">
             </div>
             <div>
               <label for="cutMarksToggle" class="block text-xs text-slate-400 mb-1">Cut Guides</label>
@@ -201,24 +193,32 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
                 <option value="none">Blank Space</option>
               </select>
             </div>
-            <div>
-              <label for="flipYSelect" class="block text-xs text-slate-400 mb-1">Head Y-Order</label>
-              <select id="flipYSelect" class="w-full bg-slate-800 border border-emerald-500/40 rounded-lg px-2 py-1.5 text-xs text-emerald-300">
-                <option value="normal" selected>Normal (Fixed)</option>
-                <option value="mirrored">Mirrored (Legacy)</option>
-              </select>
-            </div>
           </div>
+
+          <!-- Collapsible Advanced Hardware Calibration -->
+          <details class="pt-1 border-t border-slate-800/80 text-xs">
+            <summary class="cursor-pointer text-slate-400 hover:text-slate-200 select-none font-medium">
+              Advanced Feed &amp; Printhead Calibration
+            </summary>
+            <div class="grid grid-cols-2 gap-3 pt-2.5">
+              <div>
+                <label for="overfeedMmInput" class="block text-[11px] text-slate-400 mb-1" title="Optional extra blank feed at the end of the strip (0mm lands directly on the trailing cut line)">Extra End Feed (mm)</label>
+                <input id="overfeedMmInput" type="number" min="0" max="45" step="1" value="0" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 mono">
+              </div>
+              <div>
+                <label for="flipYSelect" class="block text-[11px] text-slate-400 mb-1">Head Y-Order</label>
+                <select id="flipYSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200">
+                  <option value="normal" selected>Normal (`32 + y`)</option>
+                  <option value="mirrored">Mirrored (`63 - y`)</option>
+                </select>
+              </div>
+            </div>
+          </details>
         </div>
 
         <!-- Export & Direct Print Actions -->
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Output &amp; Direct Print</h2>
-            <button id="toggleSerialDrawerBtn" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 mono transition">
-              📟 Serial Status Inspector
-            </button>
-          </div>
+          <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Output &amp; Direct Print</h2>
           
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button id="downloadPngBtn" class="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition shadow">
@@ -251,7 +251,7 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 class="text-sm font-semibold text-white">Live 1-Bit Thermal Head Preview (64 Printable Dots Tall)</h2>
-              <p class="text-xs text-slate-400">Notice in your photo how the text printed vertically mirrored? I inverted the Y-bit order (`32 + y`) so text prints right-side up!</p>
+              <p class="text-xs text-slate-400">Strict integer-pixel raster preview at 180 DPI (9.0mm active zone on 12mm TZe tape)</p>
             </div>
             <div class="flex items-center gap-2">
               <label for="zoomRange" class="text-xs text-slate-400">Zoom:</label>
@@ -324,59 +324,6 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
               API Docs →
             </button>
           </div>
-        </div>
-
-        <!-- Live Bluetooth Serial Console & 32-Byte ESC i S Status Inspector Drawer -->
-        <div id="serialInspectorDrawer" class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
-              <span id="serialStateDot" class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span>
-              <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Bluetooth Serial Console &amp; `ESC i S` Status Inspector</h3>
-              <span id="serialPhaseBadge" class="text-[11px] mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Idle</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <button id="queryStatusBtn" class="text-[11px] px-2.5 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 mono transition">
-                🔍 Probe 32B Status (`ESC i S`)
-              </button>
-              <button id="simulateStatusBtn" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 mono transition" title="Simulate decoding a 32-byte Brother PT-P300BT status packet">
-                Simulate Packet
-              </button>
-              <button id="clearSerialLogBtn" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition">
-                Clear
-              </button>
-            </div>
-          </div>
-
-          <!-- Decoded 32-Byte Status Fields -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5">
-              <div class="text-[10px] uppercase text-slate-400">Media (`status[10..11]`)</div>
-              <div id="statusMediaText" class="mono font-semibold text-slate-200 mt-0.5">—</div>
-            </div>
-            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5">
-              <div class="text-[10px] uppercase text-slate-400">Error Info 1 (`status[8]`)</div>
-              <div id="statusErr1Text" class="mono font-semibold text-emerald-400 mt-0.5">0x00 (OK)</div>
-            </div>
-            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5">
-              <div class="text-[10px] uppercase text-slate-400">Error Info 2 (`status[9]`)</div>
-              <div id="statusErr2Text" class="mono font-semibold text-emerald-400 mt-0.5">0x00 (OK)</div>
-            </div>
-            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5">
-              <div class="text-[10px] uppercase text-slate-400">Phase / Type (`[18..19]`)</div>
-              <div id="statusPhaseText" class="mono font-semibold text-sky-300 mt-0.5">—</div>
-            </div>
-          </div>
-
-          <!-- Raw 32-Byte Status Hex Bar -->
-          <div class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 flex flex-wrap items-center justify-between gap-2">
-            <span class="text-[10px] uppercase tracking-wider text-slate-400 shrink-0">Raw 32B `ESC i S` Hex:</span>
-            <code id="statusRawHexText" class="text-[11px] mono text-amber-300 break-all">80 20 42 30 68 30 00 00 00 00 0C 01 00 00 00 00 00 00 00 00 00 00 00 00 01 08 00 00 00 00 00 00</code>
-          </div>
-
-          <!-- Live Serial Log Console -->
-          <pre id="serialConsoleLog" class="bg-slate-950 border border-slate-800 rounded-lg p-3 text-[11px] mono text-slate-300 max-h-44 overflow-y-auto leading-relaxed">[CubeTag64 Serial Console Ready] Pair PT-P300BT over Bluetooth Classic SPP (Outgoing COM port / RFCOMM ch 1).
-• Waits for 32B status handshake (0x80 0x20 ...) before streaming PackBits (4D 02).
-• Waits for post-print completion status packet (status[18]==0x01) before closing port to prevent Red LED abort.</pre>
         </div>
 
       </div>
@@ -544,6 +491,58 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
           </div>
           <pre id="hexPreviewBox" class="text-[11px] mono text-slate-300 bg-slate-900 p-3 rounded-lg overflow-x-auto border border-slate-800"></pre>
         </div>
+
+        <!-- Collapsed Bluetooth Serial Console & 32-Byte ESC i S Status Inspector -->
+        <details id="serialInspectorDrawer" class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+          <summary class="cursor-pointer select-none flex flex-wrap items-center justify-between gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+            <span class="flex items-center gap-2">
+              <span id="serialStateDot" class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span>
+              <span>Bluetooth Serial Console &amp; `ESC i S` Status Inspector</span>
+              <span id="serialPhaseBadge" class="text-[11px] mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 normal-case font-normal">Idle</span>
+            </span>
+            <span class="text-[11px] mono text-slate-400 normal-case font-normal">Click to expand diagnostics</span>
+          </summary>
+
+          <div class="pt-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-end gap-1.5">
+              <button id="queryStatusBtn" class="text-[11px] px-2.5 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 mono transition">
+                🔍 Probe 32B Status (`ESC i S`)
+              </button>
+              <button id="simulateStatusBtn" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 mono transition">
+                Simulate Packet
+              </button>
+              <button id="clearSerialLogBtn" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition">
+                Clear
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div class="bg-slate-900 border border-slate-800 rounded-lg p-2.5">
+                <div class="text-[10px] uppercase text-slate-400">Media (`status[10..11]`)</div>
+                <div id="statusMediaText" class="mono font-semibold text-slate-200 mt-0.5">—</div>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 rounded-lg p-2.5">
+                <div class="text-[10px] uppercase text-slate-400">Error Info 1 (`status[8]`)</div>
+                <div id="statusErr1Text" class="mono font-semibold text-emerald-400 mt-0.5">0x00 (OK)</div>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 rounded-lg p-2.5">
+                <div class="text-[10px] uppercase text-slate-400">Error Info 2 (`status[9]`)</div>
+                <div id="statusErr2Text" class="mono font-semibold text-emerald-400 mt-0.5">0x00 (OK)</div>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 rounded-lg p-2.5">
+                <div class="text-[10px] uppercase text-slate-400">Phase / Type (`[18..19]`)</div>
+                <div id="statusPhaseText" class="mono font-semibold text-sky-300 mt-0.5">—</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+              <span class="text-[10px] uppercase tracking-wider text-slate-400 shrink-0">Raw 32B `ESC i S` Hex:</span>
+              <code id="statusRawHexText" class="text-[11px] mono text-amber-300 break-all">80 20 42 30 68 30 00 00 00 00 0C 01 00 00 00 00 00 00 00 00 00 00 00 00 01 08 00 00 00 00 00 00</code>
+            </div>
+
+            <pre id="serialConsoleLog" class="bg-slate-900 border border-slate-800 rounded-lg p-3 text-[11px] mono text-slate-300 max-h-44 overflow-y-auto leading-relaxed">[CubeTag64 Serial Console Ready]</pre>
+          </div>
+        </details>
       </div>
     </section>
 
@@ -913,7 +912,7 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       moduleScale: 'auto',
       layout: 'side',
       gapPx: 18,
-      overfeedMm: 24, // 24mm (~170 dots @ 180 DPI) trailing overfeed so the manual cutter clears the last label
+      overfeedMm: 0, // 0mm default: PT-P300BT native 1B 69 4B 08 + 0x1A feed lands directly on the trailing cut line
       cutMarks: 'dashed',
       flipY: false, // false = Normal right-side-up on physical PT-P300BT
       zoom: 3,
@@ -957,7 +956,7 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       params.set('scale', state.moduleScale);
       params.set('layout', state.layout);
       params.set('gap', String(state.gapPx));
-      params.set('overfeed', String(state.overfeedMm));
+      if (state.overfeedMm > 0) params.set('overfeed', String(state.overfeedMm));
       params.set('cut', state.cutMarks);
       if (state.flipY) params.set('flipY', '1');
       params.set('items', items);
@@ -1070,9 +1069,9 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       const items = parseBatchLines();
       const rendered = items.map(renderSingleLabelToCanvas);
       const gap = Math.max(8, Math.min(64, parseInt(document.getElementById('gapPxInput').value || '18', 10)));
-      const overfeedMm = Math.max(0, Math.min(45, parseInt(document.getElementById('overfeedMmInput').value || '24', 10)));
+      const overfeedMm = Math.max(0, Math.min(45, parseInt(document.getElementById('overfeedMmInput').value || '0', 10)));
       state.gapPx = gap;
-      state.overfeedMm = isNaN(overfeedMm) ? 24 : overfeedMm;
+      state.overfeedMm = isNaN(overfeedMm) ? 0 : overfeedMm;
       state.cutMarks = document.getElementById('cutMarksToggle').value;
       state.flipY = document.getElementById('flipYSelect').value === 'mirrored';
 
@@ -1169,7 +1168,9 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       const overfeedDots = getOverfeedDots();
 
       document.getElementById('gridBadge').textContent = `${first.chosenScale}×${first.chosenScale} px/module`;
-      document.getElementById('stripStatsText').textContent = `64×${totalWidth}px (${lengthMm}mm) + ${state.overfeedMm}mm overfeed (${overfeedDots} dots)`;
+      document.getElementById('stripStatsText').textContent = overfeedDots > 0
+        ? `64×${totalWidth}px (${lengthMm}mm) + ${state.overfeedMm}mm feed`
+        : `64 px × ${totalWidth} px (${lengthMm} mm total strip)`;
       document.getElementById('metricHeadUsage').textContent = `${first.usedHeight} / 64 dots`;
       document.getElementById('metricModuleMm').textContent = `${pitchMm} mm/mod`;
       document.getElementById('metricTapeSaved').textContent = `${savedMm} mm saved`;
@@ -1986,13 +1987,6 @@ if __name__ == '__main__':
         a.click();
         a.remove();
         showToast('Downloaded exact 64px-tall 1-bit PNG strip.');
-      });
-
-      document.getElementById('toggleSerialDrawerBtn').addEventListener('click', () => {
-        const drawer = document.getElementById('serialInspectorDrawer');
-        drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        drawer.classList.add('ring-1', 'ring-emerald-500/60');
-        setTimeout(() => drawer.classList.remove('ring-1', 'ring-emerald-500/60'), 1200);
       });
 
       document.getElementById('clearSerialLogBtn').addEventListener('click', () => {

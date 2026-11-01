@@ -774,7 +774,7 @@ def build_ptcbp_stream(
     raster_cols: Sequence[bytes],
     media_type: int = 0x01,
     tape_width_mm: int = 0x0C,
-    overfeed_dots: int = 170,
+    overfeed_dots: int = 0,
 ) -> bytes:
     n_lines = len(raster_cols) + max(0, overfeed_dots)
     out = bytearray()
@@ -811,7 +811,7 @@ def print_over_rfcomm(
     port: str,
     raster_cols: Sequence[bytes],
     status_only: bool = False,
-    overfeed_mm: float = 24.0,
+    overfeed_mm: float = 0.0,
 ) -> int:
     try:
         import serial  # type: ignore
@@ -917,7 +917,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--scale", choices=["auto", "2", "3", "4", "5"], default="auto", help="Integer thermal dots per module")
     parser.add_argument("--layout", choices=["side", "compact", "codeonly"], default="side", help="Tag layout")
     parser.add_argument("--gap", type=int, default=18, help="Gap between chained tags in pixels (default: 18)")
-    parser.add_argument("--overfeed-mm", type=float, default=24.0, help="Trailing blank feed in mm so the manual cutter clears the last tag (default: 24.0)")
+    parser.add_argument("--overfeed-mm", type=float, default=0.0, help="Extra trailing blank feed in mm beyond the native ESC i K 0x08 cutter feed (default: 0.0)")
     parser.add_argument("--cut", choices=["dashed", "ticks", "none"], default="dashed", help="Scissor cut guide style")
     parser.add_argument("--flip-y", action="store_true", help="Use legacy mirrored Y-order (default is hardware-verified normal top-to-bottom)")
     parser.add_argument("--port", metavar="PORT", help="Bluetooth RFCOMM serial port (e.g., COM5 on Windows or /dev/rfcomm0 on Linux)")
