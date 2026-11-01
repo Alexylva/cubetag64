@@ -2084,114 +2084,68 @@ if __name__ == '__main__':
           return;
         }
         let port = null;
-        let writer = null;
-        let reader = null;
         try {
           port = await navigator.serial.requestPort();
           await port.open({ baudRate: 9600 });
-          writer = port.writable.getWriter();
-          reader = port.readable ? port.readable.getReader() : null;
-          const rxCarry = [];
+          const writer = port.writable.getWriter();
+          const reader = port.readable ? port.readable.getReader() : null;
 
-          showToast('1/4 Waking PT-P300BT & reading 32-byte ESC i S status...');
+          showToast('1/3 Waking PT-P300BT & reading 32-byte tape status...');
           logSerialConsole('=== Starting PT-P300BT Print Job ===');
-          logSerialConsole('TX Step 1–2: [00 x 100] (Invalidate) + 1B 40 (ESC @ Initialize)');
-          const wakeReset = new Uint8Array(102);
-          wakeReset.set([0x1B, 0x40], 100);
-          await writer.write(wakeReset);
-          await new Promise(r => setTimeout(r, 150));
+          logSerialConsole('TX Step 1–3: [00 x 100] + 1B 40 (ESC @) + 1B 69 53 (ESC i S)');
+          // 1. Send 100 null bytes + ESC @ (Reset) + ESC i S (Status request) — exact hardware-verified 105B wakeup
+          const wakeup = new Uint8Array(105);
+          wakeup.set([0x1B, 0x40, 0x1B, 0x69, 0x53], 100);
+          await writer.write(wakeup);
 
-          logSerialConsole('TX Step 3: 1B 69 53 (ESC i S Status Request)');
-          await writer.write(new Uint8Array([0x1B, 0x69, 0x53]));
-
+          // Read up to 32 status bytes with a 700ms timeout, then release reader BEFORE streaming raster data
           let mediaType = 0x01;
           let tapeWidthMm = 0x0C;
           if (reader) {
-            const statusPkt = await readNext32ByteStatusPacket(reader, rxCarry, 1500);
-            if (statusPkt) {
-              const decoded = decodeAndDisplayBrotherStatus(statusPkt);
-              tapeWidthMm = decoded.tapeWidthMm;
-              mediaType = decoded.mediaType;
-              if (decoded.allErrors.length > 0) {
-                throw new Error(`Printer halted with Error Info: ${decoded.allErrors.join(', ')}`);
+            const statusBuf = [];
+            const deadline = Date.now() + 700;
+            while (Date.now() < deadline && statusBuf.length < 32) {
+              const readPromise = reader.read();
+              const timeoutPromise = new Promise(r => setTimeout(() => r({ timeout: true }), Math.max(50, deadline - Date.now())));
+              const res = await Promise.race([readPromise, timeoutPromise]);
+              if (res.timeout || res.done) break;
+              if (res.value) {
+                for (const b of res.value) statusBuf.push(b);
               }
-            } else {
-              logSerialConsole('WARN: No 32-byte status packet received within 1500ms; defaulting to 12mm Laminated TZe (0x0C / 0x01).');
+            }
+            try { await reader.cancel(); } catch (e) {}
+            reader.releaseLock();
+            if (statusBuf.length >= 32 && statusBuf[0] === 0x80) {
+              const decoded = decodeAndDisplayBrotherStatus(statusBuf);
+              tapeWidthMm = decoded.tapeWidthMm || 0x0C;
+              mediaType = decoded.mediaType || 0x01;
             }
           }
 
           const overfeedDots = getOverfeedDots();
-          showToast(`2/4 Streaming PackBits (4D 02) raster + ${state.overfeedMm}mm cutter overfeed...`);
+          showToast(`2/3 Streaming PackBits (4D 02) raster + ${state.overfeedMm}mm cutter overfeed...`);
           const payload = buildBrotherPTCBPPayload(state.lastRasterColumns, mediaType, tapeWidthMm, overfeedDots);
           logSerialConsole(`TX Steps 4–10: Streaming ${payload.length} bytes (${state.lastRasterColumns.length} tag cols + ${overfeedDots} cutter overfeed cols [${state.overfeedMm}mm] + 0x1A feed)...`);
 
-          // Write in 192-byte chunks with 12ms pacing so the Bluetooth UART buffer never overflows
-          const chunkSize = 192;
-          for (let off = 0; off < payload.length; off += chunkSize) {
-            const slice = payload.subarray(off, Math.min(payload.length, off + chunkSize));
+          // Write in 256-byte chunks with 10ms pacing so the Bluetooth UART buffer never overflows
+          for (let off = 0; off < payload.length; off += 256) {
+            const slice = payload.subarray(off, Math.min(payload.length, off + 256));
             await writer.write(slice);
-            await new Promise(r => setTimeout(r, 12));
+            await new Promise(r => setTimeout(r, 10));
           }
 
-          showToast('3/4 Waiting for PT-P300BT post-print completion status (0x01) before closing port...');
-          logSerialConsole('TX Complete. Waiting for post-print 32-byte completion packet (status[18]==0x01) before closing serial port...');
-
-          // Estimate maximum print duration based on strip width (~180 cols/sec + 8s margin)
-          const waitBudgetMs = Math.max(8000, Math.min(25000, Math.ceil((state.lastRasterColumns.length / 80) * 1000) + 6000));
-          const waitEnd = Date.now() + waitBudgetMs;
-          let sawPrintPhase = false;
-          let printConfirmed = false;
-
-          if (reader) {
-            while (Date.now() < waitEnd) {
-              const postPkt = await readNext32ByteStatusPacket(reader, rxCarry, Math.min(2000, Math.max(200, waitEnd - Date.now())));
-              if (!postPkt) {
-                if (sawPrintPhase) continue;
-                continue;
-              }
-              const postInfo = decodeAndDisplayBrotherStatus(postPkt);
-              if (postInfo.phaseType === 0x01) {
-                sawPrintPhase = true;
-              }
-              if (postInfo.statusType === 0x01) {
-                printConfirmed = true;
-                logSerialConsole('✓ Post-print completion status (status[18]==0x01) confirmed! Safe to close port.');
-                break;
-              }
-              if (postInfo.statusType === 0x02 || postInfo.allErrors.length > 0) {
-                throw new Error(`Printer error during print: ${postInfo.allErrors.join(', ') || 'status[18]==0x02'}`);
-              }
-              if (sawPrintPhase && postInfo.statusType === 0x06 && postInfo.phaseType === 0x00) {
-                printConfirmed = true;
-                logSerialConsole('✓ Printer returned to Phase 0 Ready state after printing! Safe to close port.');
-                break;
-              }
-            }
-          }
-
-          if (!printConfirmed) {
-            logSerialConsole('Notice: Post-print status wait window elapsed; holding port 500ms before closing.');
-            await new Promise(r => setTimeout(r, 500));
-          } else {
-            await new Promise(r => setTimeout(r, 250));
-          }
-
-          showToast(`4/4 Printed ${state.lastRasterColumns.length} PackBits columns on PT-P300BT (${tapeWidthMm}mm TZe)!`);
+          // Wait before closing RFCOMM port so the printer finishes reading the buffer without PurgeComm aborting
+          await new Promise(r => setTimeout(r, 2000));
+          writer.releaseLock();
+          await port.close();
+          logSerialConsole(`✓ Sent ${state.lastRasterColumns.length} tag cols + ${overfeedDots} overfeed cols and closed port cleanly.`);
+          showToast(`3/3 Sent ${state.lastRasterColumns.length} PackBits columns + ${state.overfeedMm}mm cutter overfeed to PT-P300BT!`);
         } catch (err) {
           logSerialConsole(`ERROR: ${err.message || err}`);
-          showToast(`Bluetooth Serial notice: ${err.message || 'Check Outgoing COM port or press power button once to clear red LED.'}`);
-        } finally {
-          if (reader) {
-            try { await reader.cancel(); } catch (e) {}
-            try { reader.releaseLock(); } catch (e) {}
-          }
-          if (writer) {
-            try { writer.releaseLock(); } catch (e) {}
-          }
           if (port) {
             try { await port.close(); } catch (e) {}
-            logSerialConsole('Serial port closed cleanly.');
           }
+          showToast(`Bluetooth Serial notice: ${err.message || 'Check Outgoing COM port or press power button once to clear red LED.'}`);
         }
       });
 
