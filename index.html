@@ -138,21 +138,44 @@
 
         <!-- Single or Batch Inventory Items Card -->
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Inventory Payload (Chain Strip)</h2>
-            <div class="flex gap-1.5">
-              <button id="presetToolsBtn" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
-                Load IT/Tools Sample
+            <div class="flex flex-wrap gap-1.5">
+              <button id="presetToolsBtn" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="Load IT & Tools sample">
+                IT/Tools
+              </button>
+              <button id="presetHomeboxBtn" class="text-[11px] px-2 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition" title="Simulate Homebox CSV import">
+                Homebox Preset
+              </button>
+              <button id="presetSnipeBtn" class="text-[11px] px-2 py-1 rounded bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 transition" title="Simulate Snipe-IT CSV import">
+                Snipe-IT Preset
               </button>
               <button id="autoSeqBtn" class="text-[11px] px-2 py-1 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition">
-                +5 Sequence
+                +5 Seq
               </button>
             </div>
           </div>
 
           <p class="text-xs text-slate-400 leading-relaxed">
-            The PT-P300BT cutter sits <strong>24mm</strong> away from the printhead. Enter multiple tags below (`CODE | TITLE | SUBTITLE`) or pass them via URL parameters (`?items=...`) to print a continuous <strong>chain strip</strong> with scissor ticks.
+            The PT-P300BT cutter sits <strong>24mm</strong> away from the printhead. Enter multiple tags below (`CODE | TITLE | SUBTITLE`), drag &amp; drop a <strong>Homebox / Snipe-IT CSV</strong>, or pass `?items=...` via URL.
           </p>
+
+          <!-- Drag & Drop CSV Import Bar -->
+          <div id="csvDropZone" class="border border-dashed border-slate-700 hover:border-amber-500/60 bg-slate-950/70 rounded-lg p-2.5 transition flex flex-wrap items-center justify-between gap-2 cursor-pointer">
+            <div class="flex items-center gap-2">
+              <span class="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 mono">CSV</span>
+              <span id="csvStatusLabel" class="text-xs text-slate-300">Drop <strong>Homebox</strong> / <strong>Snipe-IT</strong> `.csv` here or click to browse</span>
+            </div>
+            <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+              <select id="csvPresetSelect" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-[11px] text-slate-200 focus:outline-none focus:border-amber-500" title="CSV column mapping preset">
+                <option value="auto" selected>Auto-Detect Columns</option>
+                <option value="homebox">Homebox CSV</option>
+                <option value="snipeit">Snipe-IT CSV</option>
+                <option value="grocy">Grocy / Shelf CSV</option>
+              </select>
+              <input id="csvFileInput" type="file" accept=".csv,.tsv,.txt" class="hidden">
+            </div>
+          </div>
 
           <div>
             <textarea id="batchInput" rows="5" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs mono text-emerald-300 focus:outline-none focus:border-amber-500 leading-relaxed" spellcheck="false">IT-001 | USB-C PD | 100W 2m
@@ -161,10 +184,14 @@ TL-014 | TORX T8 | Precision
 PT-089 | ESP32-S3 | DevKitC-1</textarea>
           </div>
 
-          <div class="grid grid-cols-3 gap-2.5">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div>
               <label for="gapPxInput" class="block text-xs text-slate-400 mb-1">Cut Gap (px)</label>
               <input id="gapPxInput" type="number" min="8" max="64" step="2" value="18" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white mono">
+            </div>
+            <div>
+              <label for="overfeedMmInput" class="block text-xs text-amber-300 mb-1" title="Extra blank feed at the end of the strip so the manual cutter (24mm past printhead) does not slice the last tag in half">End Overfeed (mm)</label>
+              <input id="overfeedMmInput" type="number" min="0" max="45" step="1" value="24" class="w-full bg-slate-800 border border-amber-500/40 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 mono">
             </div>
             <div>
               <label for="cutMarksToggle" class="block text-xs text-slate-400 mb-1">Cut Guides</label>
@@ -186,7 +213,12 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
 
         <!-- Export & Direct Print Actions -->
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-          <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Output &amp; Direct Print</h2>
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-white uppercase tracking-wider">Output &amp; Direct Print</h2>
+            <button id="toggleSerialDrawerBtn" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 mono transition">
+              📟 Serial Status Inspector
+            </button>
+          </div>
           
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button id="downloadPngBtn" class="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition shadow">
@@ -292,6 +324,59 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
               API Docs →
             </button>
           </div>
+        </div>
+
+        <!-- Live Bluetooth Serial Console & 32-Byte ESC i S Status Inspector Drawer -->
+        <div id="serialInspectorDrawer" class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span id="serialStateDot" class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Bluetooth Serial Console &amp; `ESC i S` Status Inspector</h3>
+              <span id="serialPhaseBadge" class="text-[11px] mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Idle</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button id="queryStatusBtn" class="text-[11px] px-2.5 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 mono transition">
+                🔍 Probe 32B Status (`ESC i S`)
+              </button>
+              <button id="simulateStatusBtn" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 mono transition" title="Simulate decoding a 32-byte Brother PT-P300BT status packet">
+                Simulate Packet
+              </button>
+              <button id="clearSerialLogBtn" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- Decoded 32-Byte Status Fields -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5">
+              <div class="text-[10px] uppercase text-slate-400">Media (`status[10..11]`)</div>
+              <div id="statusMediaText" class="mono font-semibold text-slate-200 mt-0.5">—</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5">
+              <div class="text-[10px] uppercase text-slate-400">Error Info 1 (`status[8]`)</div>
+              <div id="statusErr1Text" class="mono font-semibold text-emerald-400 mt-0.5">0x00 (OK)</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5">
+              <div class="text-[10px] uppercase text-slate-400">Error Info 2 (`status[9]`)</div>
+              <div id="statusErr2Text" class="mono font-semibold text-emerald-400 mt-0.5">0x00 (OK)</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5">
+              <div class="text-[10px] uppercase text-slate-400">Phase / Type (`[18..19]`)</div>
+              <div id="statusPhaseText" class="mono font-semibold text-sky-300 mt-0.5">—</div>
+            </div>
+          </div>
+
+          <!-- Raw 32-Byte Status Hex Bar -->
+          <div class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+            <span class="text-[10px] uppercase tracking-wider text-slate-400 shrink-0">Raw 32B `ESC i S` Hex:</span>
+            <code id="statusRawHexText" class="text-[11px] mono text-amber-300 break-all">80 20 42 30 68 30 00 00 00 00 0C 01 00 00 00 00 00 00 00 00 00 00 00 00 01 08 00 00 00 00 00 00</code>
+          </div>
+
+          <!-- Live Serial Log Console -->
+          <pre id="serialConsoleLog" class="bg-slate-950 border border-slate-800 rounded-lg p-3 text-[11px] mono text-slate-300 max-h-44 overflow-y-auto leading-relaxed">[CubeTag64 Serial Console Ready] Pair PT-P300BT over Bluetooth Classic SPP (Outgoing COM port / RFCOMM ch 1).
+• Waits for 32B status handshake (0x80 0x20 ...) before streaming PackBits (4D 02).
+• Waits for post-print completion status packet (status[18]==0x01) before closing port to prevent Red LED abort.</pre>
         </div>
 
       </div>
@@ -828,12 +913,17 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       moduleScale: 'auto',
       layout: 'side',
       gapPx: 18,
+      overfeedMm: 24, // 24mm (~170 dots @ 180 DPI) trailing overfeed so the manual cutter clears the last label
       cutMarks: 'dashed',
       flipY: false, // false = Normal right-side-up on physical PT-P300BT
       zoom: 3,
       darkTape: false,
       lastRasterColumns: []
     };
+
+    function getOverfeedDots(overfeedMm = state.overfeedMm) {
+      return Math.max(0, Math.round((overfeedMm / 25.4) * 180));
+    }
 
     function showToast(msg) {
       const banner = document.getElementById('toastBanner');
@@ -867,6 +957,7 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       params.set('scale', state.moduleScale);
       params.set('layout', state.layout);
       params.set('gap', String(state.gapPx));
+      params.set('overfeed', String(state.overfeedMm));
       params.set('cut', state.cutMarks);
       if (state.flipY) params.set('flipY', '1');
       params.set('items', items);
@@ -979,11 +1070,14 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       const items = parseBatchLines();
       const rendered = items.map(renderSingleLabelToCanvas);
       const gap = Math.max(8, Math.min(64, parseInt(document.getElementById('gapPxInput').value || '18', 10)));
+      const overfeedMm = Math.max(0, Math.min(45, parseInt(document.getElementById('overfeedMmInput').value || '24', 10)));
       state.gapPx = gap;
+      state.overfeedMm = isNaN(overfeedMm) ? 24 : overfeedMm;
       state.cutMarks = document.getElementById('cutMarksToggle').value;
       state.flipY = document.getElementById('flipYSelect').value === 'mirrored';
 
-      const totalWidth = rendered.reduce((acc, r) => acc + r.canvas.width, 0) + (rendered.length - 1) * gap + 16;
+      const trailingPad = state.cutMarks !== 'none' ? Math.max(10, Math.floor(gap / 2) + 4) : 8;
+      const totalWidth = rendered.reduce((acc, r) => acc + r.canvas.width, 0) + (rendered.length - 1) * gap + 8 + trailingPad;
       const nativeCanvas = document.getElementById('nativeCanvas');
       nativeCanvas.width = totalWidth;
       nativeCanvas.height = 64;
@@ -992,23 +1086,29 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       nCtx.fillStyle = '#FFFFFF';
       nCtx.fillRect(0, 0, totalWidth, 64);
 
+      function drawCutMarkAt(xPos) {
+        nCtx.fillStyle = '#000000';
+        if (state.cutMarks === 'dashed') {
+          for (let y = 0; y < 64; y += 6) {
+            nCtx.fillRect(xPos, y, 1, 3);
+          }
+        } else if (state.cutMarks === 'ticks') {
+          nCtx.fillRect(xPos, 0, 2, 6);
+          nCtx.fillRect(xPos, 58, 2, 6);
+        }
+      }
+
       let curX = 8;
       rendered.forEach((r, idx) => {
         nCtx.drawImage(r.canvas, curX, 0);
         curX += r.canvas.width;
 
         if (idx < rendered.length - 1) {
-          const midX = curX + Math.floor(gap / 2);
-          nCtx.fillStyle = '#000000';
-          if (state.cutMarks === 'dashed') {
-            for (let y = 0; y < 64; y += 6) {
-              nCtx.fillRect(midX, y, 1, 3);
-            }
-          } else if (state.cutMarks === 'ticks') {
-            nCtx.fillRect(midX, 0, 2, 6);
-            nCtx.fillRect(midX, 58, 2, 6);
-          }
+          drawCutMarkAt(curX + Math.floor(gap / 2));
           curX += gap;
+        } else if (state.cutMarks !== 'none') {
+          // Final trailing cut guide right after the last tag before cutter overfeed
+          drawCutMarkAt(curX + Math.floor(trailingPad / 2));
         }
       });
 
@@ -1066,9 +1166,10 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       const lengthMm = ((totalWidth / 180) * 25.4).toFixed(1);
       const pitchMm = ((first.chosenScale / 180) * 25.4).toFixed(2);
       const savedMm = Math.max(0, (items.length - 1) * 24);
+      const overfeedDots = getOverfeedDots();
 
       document.getElementById('gridBadge').textContent = `${first.chosenScale}×${first.chosenScale} px/module`;
-      document.getElementById('stripStatsText').textContent = `64 px × ${totalWidth} px (${lengthMm} mm total strip)`;
+      document.getElementById('stripStatsText').textContent = `64×${totalWidth}px (${lengthMm}mm) + ${state.overfeedMm}mm overfeed (${overfeedDots} dots)`;
       document.getElementById('metricHeadUsage').textContent = `${first.usedHeight} / 64 dots`;
       document.getElementById('metricModuleMm').textContent = `${pitchMm} mm/mod`;
       document.getElementById('metricTapeSaved').textContent = `${savedMm} mm saved`;
@@ -1130,8 +1231,8 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       return pkt;
     }
 
-    function buildBrotherPTCBPPayload(rasterCols, mediaType = 0x01, tapeWidthMm = 0x0C) {
-      const nLines = rasterCols.length;
+    function buildBrotherPTCBPPayload(rasterCols, mediaType = 0x01, tapeWidthMm = 0x0C, overfeedDots = getOverfeedDots()) {
+      const nLines = rasterCols.length + overfeedDots;
       const chunks = [];
       // 1. Switch to PTCBP dynamic raster mode (ESC i a 0x01)
       chunks.push(new Uint8Array([0x1B, 0x69, 0x61, 0x01]));
@@ -1147,7 +1248,7 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       chunks.push(new Uint8Array([0x1B, 0x69, 0x4D, 0x40]));
       // 5. Advanced mode settings (ESC i K 0x08 = cut/feed at end of strip)
       chunks.push(new Uint8Array([0x1B, 0x69, 0x4B, 0x08]));
-      // 6. Zero margin (ESC i d 0x00 0x00)
+      // 6. Zero leading margin (ESC i d 0x00 0x00) — trailing cutter clearance is handled by overfeedDots ('Z' columns)
       chunks.push(new Uint8Array([0x1B, 0x69, 0x64, 0x00, 0x00]));
       // 7. Select TIFF PackBits compression mode (M 0x02) — MANDATORY on PT-P300BT!
       chunks.push(new Uint8Array([0x4D, 0x02]));
@@ -1155,6 +1256,13 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
       // 8. Emit PackBits-compressed raster columns ('Z' for empty, 'G' + len + packbits for non-empty)
       for (const col of rasterCols) {
         chunks.push(encodeRasterColumnPacket(col));
+      }
+
+      // 8B. Emit trailing cutter overfeed ('Z' = 0x5A zero-columns) so the last tag clears the 24mm cutter blade!
+      if (overfeedDots > 0) {
+        const overfeedBuf = new Uint8Array(overfeedDots);
+        overfeedBuf.fill(0x5A);
+        chunks.push(overfeedBuf);
       }
 
       // 9. Print and feed command (0x1A) so the finished strip ejects cleanly
@@ -1171,12 +1279,14 @@ PT-089 | ESP32-S3 | DevKitC-1</textarea>
     }
 
     function updateHexAndPythonViews(totalWidth, rasterCols) {
-      const payload = buildBrotherPTCBPPayload(rasterCols);
-      document.getElementById('packetLengthBadge').textContent = `${totalWidth} cols → ${payload.length} PackBits bytes`;
+      const overfeedDots = getOverfeedDots();
+      const payload = buildBrotherPTCBPPayload(rasterCols, 0x01, 0x0C, overfeedDots);
+      document.getElementById('packetLengthBadge').textContent = `${totalWidth} cols + ${overfeedDots} overfeed → ${payload.length} PackBits bytes`;
       
       const previewLines = [];
       previewLines.push(`# Handshake: [00 x 100] -> 1B 40 (Reset) -> 1B 69 53 (Read 32B Status)`);
       previewLines.push(`# Config:    1B 69 61 01 -> 1B 69 21 00 -> 1B 69 7A C4 01 0C 00 ... -> 1B 69 4D 40 -> 1B 69 4B 08 -> 1B 69 64 00 00 -> 4D 02 (PackBits!)`);
+      previewLines.push(`# Overfeed:  +${overfeedDots} trailing 'Z' (0x5A) columns (${state.overfeedMm}mm) so manual cutter clears last tag`);
       let shown = 0;
       for (let i = 0; i < rasterCols.length && shown < 6; i++) {
         const pkt = encodeRasterColumnPacket(rasterCols[i]);
@@ -1201,6 +1311,9 @@ Usage:
 import sys
 import time
 import serial
+
+OVERFEED_MM = ${state.overfeedMm}
+OVERFEED_DOTS = ${overfeedDots}  # ~7.09 dots/mm @ 180 DPI so the manual cutter clears the last tag
 
 RASTER_HEX_COLUMNS = """
 ${hexRows}
@@ -1230,8 +1343,8 @@ def packbits_encode_16(data: bytes) -> bytes:
             out.extend(data[lit_start:lit_start + lit_len])
     return bytes(out)
 
-def print_strip(port: str, columns_hex):
-    n_lines = len(columns_hex)
+def print_strip(port: str, columns_hex, overfeed_dots: int = OVERFEED_DOTS):
+    n_lines = len(columns_hex) + overfeed_dots
     with serial.Serial(port, baudrate=9600, timeout=3) as ser:
         # 1. Clear buffer, reset, and query 32-byte printer status
         ser.write(b'\\x00' * 100)
@@ -1244,7 +1357,11 @@ def print_strip(port: str, columns_hex):
         if len(status) >= 32 and status[0] == 0x80:
             tape_width = status[10] or 0x0C
             media_type = status[11] or 0x01
-            print(f"Printer ready! Detected {tape_width}mm tape (media_type=0x{media_type:02x})")
+            err1, err2 = status[8], status[9]
+            print(f"Status HEX: {status.hex(' ').upper()}")
+            print(f"Printer ready! Detected {tape_width}mm tape (media_type=0x{media_type:02x}, err1=0x{err1:02x}, err2=0x{err2:02x})")
+            if err1 or err2:
+                print(f"WARNING: Printer reported error flags before print (err1=0x{err1:02x}, err2=0x{err2:02x})")
 
         # 2. Configure PTCBP Raster + PackBits (4D 02)
         hdr = bytearray()
@@ -1268,17 +1385,282 @@ def print_strip(port: str, columns_hex):
             else:
                 packed = packbits_encode_16(raw16)
                 buf.extend(bytes([0x47, len(packed) & 0xFF, (len(packed) >> 8) & 0xFF]) + packed)
+        if overfeed_dots > 0:
+            buf.extend(b'\\x5a' * overfeed_dots)  # Trailing cutter overfeed
         buf.append(0x1A)  # Print with feed
         ser.write(buf)
         ser.flush()
-        time.sleep(2.0)
-        print("Done! Strip printed.")
+
+        # 4. Wait for post-print 32-byte completion status packet (status[18] == 0x01) before closing port
+        deadline = time.time() + 12.0
+        while time.time() < deadline:
+            post = ser.read(32)
+            if len(post) >= 32 and post[0] == 0x80:
+                print(f"Post-Status HEX: {post.hex(' ').upper()}")
+                if post[18] == 0x01:
+                    print("Done! Printer confirmed Printing Completed (status[18]==0x01).")
+                    break
+                if post[18] == 0x02 or post[8] or post[9]:
+                    print(f"Printer reported error: err1=0x{post[8]:02x}, err2=0x{post[9]:02x}")
+                    break
+        time.sleep(0.3)
 
 if __name__ == '__main__':
     port = sys.argv[1] if len(sys.argv) > 1 else 'COM5'
     print_strip(port, RASTER_HEX_COLUMNS)
 `;
       document.getElementById('pythonCodeBox').textContent = pyScript;
+    }
+
+    // =========================================================================
+    // 4B. 32-BYTE ESC i S STATUS DECODER, SERIAL CONSOLE & CSV IMPORTER
+    // =========================================================================
+    const BROTHER_ERR1_FLAGS = [
+      [0x01, 'No Media'],
+      [0x02, 'End of Media'],
+      [0x04, 'Cutter Jam'],
+      [0x08, 'Weak Batteries'],
+      [0x10, 'Printer in Use'],
+      [0x20, 'Printer Turned Off'],
+      [0x40, 'High-Voltage Adapter'],
+      [0x80, 'Fan Motor Error']
+    ];
+
+    const BROTHER_ERR2_FLAGS = [
+      [0x01, 'Replace Media'],
+      [0x02, 'Expansion Buffer Full'],
+      [0x04, 'Communication Error'],
+      [0x08, 'Communication Buffer Full'],
+      [0x10, 'Cover Open'],
+      [0x20, 'Overheating'],
+      [0x40, 'Wrong Media'],
+      [0x80, 'System Error']
+    ];
+
+    const BROTHER_MEDIA_TYPES = {
+      0x00: 'No Media',
+      0x01: 'Laminated TZe',
+      0x03: 'Non-Laminated',
+      0x11: 'Heat-Shrink HSe',
+      0xFF: 'Incompatible'
+    };
+
+    const BROTHER_STATUS_TYPES = {
+      0x00: 'Status Reply (0x00)',
+      0x01: 'Print Completed (0x01)',
+      0x02: 'Error Occurred (0x02)',
+      0x04: 'Turned Off (0x04)',
+      0x05: 'Notification (0x05)',
+      0x06: 'Phase Change (0x06)'
+    };
+
+    function decodeErrorByte(byteVal, flagTable) {
+      if (!byteVal) return [];
+      const list = [];
+      for (const [mask, label] of flagTable) {
+        if (byteVal & mask) list.push(label);
+      }
+      return list;
+    }
+
+    function logSerialConsole(msg) {
+      const box = document.getElementById('serialConsoleLog');
+      if (!box) return;
+      const now = new Date();
+      const ts = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      box.textContent += `\n[${ts}] ${msg}`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function decodeAndDisplayBrotherStatus(bytes) {
+      const arr = Array.from(bytes.slice(0, 32));
+      const hexStr = arr.map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+      document.getElementById('statusRawHexText').textContent = hexStr;
+
+      const err1 = arr[8] || 0;
+      const err2 = arr[9] || 0;
+      const tapeWidthMm = arr[10] || 0;
+      const mediaType = arr[11] || 0;
+      const statusType = arr[18] || 0;
+      const phaseType = arr[19] || 0;
+
+      const err1List = decodeErrorByte(err1, BROTHER_ERR1_FLAGS);
+      const err2List = decodeErrorByte(err2, BROTHER_ERR2_FLAGS);
+      const mediaDesc = BROTHER_MEDIA_TYPES[mediaType] || `Type 0x${mediaType.toString(16).padStart(2, '0')}`;
+      const statusTypeDesc = BROTHER_STATUS_TYPES[statusType] || `0x${statusType.toString(16).padStart(2, '0')}`;
+      const phaseDesc = phaseType === 0x01 ? 'Printing (0x01)' : 'Ready (0x00)';
+
+      document.getElementById('statusMediaText').textContent = `${tapeWidthMm}mm • ${mediaDesc} (0x${mediaType.toString(16).padStart(2, '0').toUpperCase()})`;
+
+      const err1El = document.getElementById('statusErr1Text');
+      err1El.textContent = err1List.length ? `0x${err1.toString(16).padStart(2, '0').toUpperCase()}: ${err1List.join(', ')}` : '0x00 (OK)';
+      err1El.className = err1List.length ? 'mono font-semibold text-rose-400 mt-0.5' : 'mono font-semibold text-emerald-400 mt-0.5';
+
+      const err2El = document.getElementById('statusErr2Text');
+      err2El.textContent = err2List.length ? `0x${err2.toString(16).padStart(2, '0').toUpperCase()}: ${err2List.join(', ')}` : '0x00 (OK)';
+      err2El.className = err2List.length ? 'mono font-semibold text-rose-400 mt-0.5' : 'mono font-semibold text-emerald-400 mt-0.5';
+
+      document.getElementById('statusPhaseText').textContent = `${statusTypeDesc} • ${phaseDesc}`;
+
+      const badge = document.getElementById('serialPhaseBadge');
+      const dot = document.getElementById('serialStateDot');
+      const allErrors = err1List.concat(err2List);
+
+      if (allErrors.length > 0 || statusType === 0x02) {
+        badge.textContent = `ERROR: ${allErrors.join(', ') || 'Check Printer'}`;
+        badge.className = 'text-[11px] mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 inline-block animate-pulse';
+      } else if (statusType === 0x01) {
+        badge.textContent = 'Print Completed ✓';
+        badge.className = 'text-[11px] mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block';
+      } else if (phaseType === 0x01) {
+        badge.textContent = 'Printing in Progress...';
+        badge.className = 'text-[11px] mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 inline-block animate-ping';
+      } else {
+        badge.textContent = `Ready (${tapeWidthMm}mm TZe)`;
+        badge.className = 'text-[11px] mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block';
+      }
+
+      logSerialConsole(`RX 32B Status: [${hexStr}]`);
+      logSerialConsole(`   ↳ Media: ${tapeWidthMm}mm ${mediaDesc} | StatusType: ${statusTypeDesc} | Phase: ${phaseDesc}`);
+      if (allErrors.length > 0) {
+        logSerialConsole(`   ⚠ ERRORS DECODED: ${allErrors.join(' + ')} (Err1=0x${err1.toString(16).padStart(2, '0')}, Err2=0x${err2.toString(16).padStart(2, '0')})`);
+      }
+
+      return {
+        valid: arr[0] === 0x80 && arr.length >= 32,
+        err1,
+        err2,
+        allErrors,
+        tapeWidthMm: tapeWidthMm || 0x0C,
+        mediaType: mediaType || 0x01,
+        statusType,
+        phaseType
+      };
+    }
+
+    async function readNext32ByteStatusPacket(reader, rxCarry, timeoutMs) {
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
+        // Align rxCarry to 0x80 0x20 header if present
+        const hdrIdx = rxCarry.findIndex((b, idx) => b === 0x80 && (idx + 1 >= rxCarry.length || rxCarry[idx + 1] === 0x20));
+        if (hdrIdx > 0) {
+          rxCarry.splice(0, hdrIdx);
+        }
+        if (rxCarry.length >= 32 && rxCarry[0] === 0x80 && rxCarry[1] === 0x20) {
+          const pkt = rxCarry.splice(0, 32);
+          return new Uint8Array(pkt);
+        }
+
+        const remaining = Math.max(40, deadline - Date.now());
+        const readPromise = reader.read();
+        const timeoutPromise = new Promise(r => setTimeout(() => r({ timeout: true }), remaining));
+        const res = await Promise.race([readPromise, timeoutPromise]);
+        if (res.timeout || res.done) break;
+        if (res.value) {
+          for (const b of res.value) rxCarry.push(b);
+        }
+      }
+      return null;
+    }
+
+    function splitCsvRow(line, delimiter) {
+      const out = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === delimiter && !inQuotes) {
+          out.push(cur.trim());
+          cur = '';
+        } else {
+          cur += ch;
+        }
+      }
+      out.push(cur.trim());
+      return out;
+    }
+
+    function parseInventoryCsvToBatch(csvText, preset = 'auto') {
+      const rawLines = (csvText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
+      if (rawLines.length === 0) return [];
+
+      const firstLine = rawLines[0];
+      let delimiter = ',';
+      if (firstLine.includes('\t')) delimiter = '\t';
+      else if (!firstLine.includes(',') && firstLine.includes(';')) delimiter = ';';
+
+      const rows = rawLines.map(l => splitCsvRow(l, delimiter));
+      const hdr = rows[0].map(h => h.toLowerCase().replace(/^hb\./, '').replace(/[^a-z0-9_]/g, '_'));
+
+      const findCol = (candidates) => {
+        for (const c of candidates) {
+          const idx = hdr.indexOf(c);
+          if (idx !== -1) return idx;
+        }
+        for (const c of candidates) {
+          const idx = hdr.findIndex(h => h.includes(c));
+          if (idx !== -1) return idx;
+        }
+        return -1;
+      };
+
+      let codeIdx = -1, titleIdx = -1, subIdx = -1;
+      let startRow = 1;
+
+      if (preset === 'homebox') {
+        codeIdx = findCol(['asset_id', 'import_ref', 'id', 'code']);
+        titleIdx = findCol(['name', 'title', 'item']);
+        subIdx = findCol(['location', 'description', 'labels', 'parent']);
+      } else if (preset === 'snipeit') {
+        codeIdx = findCol(['asset_tag', 'tag', 'id', 'serial']);
+        titleIdx = findCol(['asset_name', 'name', 'model', 'item_name']);
+        subIdx = findCol(['location', 'category', 'model_no', 'serial', 'department']);
+      } else if (preset === 'grocy') {
+        codeIdx = findCol(['barcode', 'grocycode', 'id', 'code', 'asset_id']);
+        titleIdx = findCol(['name', 'product', 'title']);
+        subIdx = findCol(['location', 'product_group', 'category', 'qu_id_stock']);
+      } else {
+        codeIdx = findCol(['asset_tag', 'asset_id', 'barcode', 'code', 'tag', 'sku', 'id']);
+        titleIdx = findCol(['asset_name', 'name', 'title', 'model', 'product', 'item']);
+        subIdx = findCol(['location', 'sub', 'subtitle', 'category', 'description', 'serial', 'bin']);
+      }
+
+      // If first row doesn't look like a header, treat all rows as positional (0, 1, 2)
+      const looksLikeHeader = codeIdx !== -1 || titleIdx !== -1 || hdr.some(h => ['id', 'code', 'name', 'title', 'asset_id', 'asset_tag'].includes(h));
+      if (!looksLikeHeader) {
+        startRow = 0;
+        codeIdx = 0;
+        titleIdx = rows[0].length > 1 ? 1 : 0;
+        subIdx = rows[0].length > 2 ? 2 : -1;
+      } else {
+        if (codeIdx === -1) codeIdx = 0;
+        if (titleIdx === -1) titleIdx = rows[0].length > 1 ? (codeIdx === 0 ? 1 : 0) : codeIdx;
+        if (subIdx === -1 && rows[0].length > 2) {
+          subIdx = [0, 1, 2].find(i => i !== codeIdx && i !== titleIdx) ?? -1;
+        }
+      }
+
+      const items = [];
+      for (let r = startRow; r < rows.length; r++) {
+        const cols = rows[r];
+        if (!cols || cols.every(c => !c)) continue;
+        const code = (cols[codeIdx] || `IT-${String(r).padStart(3, '0')}`).replace(/\|/g, '/').trim();
+        const title = (titleIdx !== -1 && cols[titleIdx] ? cols[titleIdx] : code).replace(/\|/g, '/').trim();
+        const sub = (subIdx !== -1 && cols[subIdx] ? cols[subIdx] : '').replace(/\|/g, '/').trim();
+        items.push(`${code} | ${title} | ${sub}`);
+      }
+      return items;
     }
 
 // =========================================================================
@@ -1325,6 +1707,14 @@ if __name__ == '__main__':
         const g = parseInt(params.get('gap'), 10);
         if (!isNaN(g) && g >= 8 && g <= 64) {
           document.getElementById('gapPxInput').value = String(g);
+          applied = true;
+        }
+      }
+      if (params.has('overfeed')) {
+        const ofMm = parseInt(params.get('overfeed'), 10);
+        if (!isNaN(ofMm) && ofMm >= 0 && ofMm <= 45) {
+          document.getElementById('overfeedMmInput').value = String(ofMm);
+          state.overfeedMm = ofMm;
           applied = true;
         }
       }
@@ -1426,7 +1816,7 @@ if __name__ == '__main__':
         });
       });
 
-      ['moduleScaleSelect', 'layoutSelect', 'batchInput', 'gapPxInput', 'cutMarksToggle', 'flipYSelect'].forEach(id => {
+      ['moduleScaleSelect', 'layoutSelect', 'batchInput', 'gapPxInput', 'overfeedMmInput', 'cutMarksToggle', 'flipYSelect'].forEach(id => {
         document.getElementById(id).addEventListener('input', () => {
           state.moduleScale = document.getElementById('moduleScaleSelect').value;
           state.layout = document.getElementById('layoutSelect').value;
@@ -1457,6 +1847,94 @@ if __name__ == '__main__':
         ].join('\n');
         renderStrip();
         showToast('Loaded sample IT cables, parts, and precision tools.');
+      });
+
+      document.getElementById('presetHomeboxBtn').addEventListener('click', () => {
+        const sampleHomeboxCsv = [
+          'HB.asset_id,HB.name,HB.location,HB.description',
+          'HBX-001,Fluke 117 Multimeter,Lab Bench A,True RMS',
+          'HBX-002,Hakko FX-888D,Solder Station,T18-D16 Tip',
+          'HBX-003,MeanWell 24V PSU,Rack Shelf 2,LRS-350-24',
+          'HBX-004,Saleae Logic 8,Drawer 3,USB Logic'
+        ].join('\n');
+        const items = parseInventoryCsvToBatch(sampleHomeboxCsv, 'homebox');
+        document.getElementById('batchInput').value = items.join('\n');
+        document.getElementById('csvStatusLabel').innerHTML = `Imported <strong>${items.length}</strong> tags from <strong>Homebox CSV</strong> preset`;
+        renderStrip();
+        showToast(`Loaded ${items.length} Homebox inventory items into chain strip.`);
+      });
+
+      document.getElementById('presetSnipeBtn').addEventListener('click', () => {
+        const sampleSnipeCsv = [
+          '"Asset Tag","Asset Name","Model","Location","Category"',
+          '"SNP-1042","MacBook Pro 14","M3 Pro","HQ-2F","Laptops"',
+          '"SNP-1088","Ubiquiti U6-Pro","UniFi AP","Ceiling-N","Networking"',
+          '"SNP-1105","YubiKey 5C NFC","Security Key","Vault-B","Auth Tokens"',
+          '"SNP-1190","Raspberry Pi 5","8GB BCM2712","Rack-1U","SBC"'
+        ].join('\n');
+        const items = parseInventoryCsvToBatch(sampleSnipeCsv, 'snipeit');
+        document.getElementById('batchInput').value = items.join('\n');
+        document.getElementById('csvStatusLabel').innerHTML = `Imported <strong>${items.length}</strong> tags from <strong>Snipe-IT CSV</strong> preset`;
+        renderStrip();
+        showToast(`Loaded ${items.length} Snipe-IT assets into chain strip.`);
+      });
+
+      function handleCsvFileImport(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const text = String(ev.target.result || '');
+          const preset = document.getElementById('csvPresetSelect').value || 'auto';
+          const items = parseInventoryCsvToBatch(text, preset);
+          if (items.length === 0) {
+            showToast('No valid inventory rows found in CSV file.');
+            return;
+          }
+          document.getElementById('batchInput').value = items.join('\n');
+          document.getElementById('csvStatusLabel').innerHTML = `Loaded <strong>${items.length}</strong> tags from <span class="mono text-amber-300">${file.name}</span>`;
+          renderStrip();
+          showToast(`Imported ${items.length} inventory tags from ${file.name}!`);
+        };
+        reader.readAsText(file);
+      }
+
+      const csvDropZone = document.getElementById('csvDropZone');
+      const csvFileInput = document.getElementById('csvFileInput');
+      csvDropZone.addEventListener('click', () => csvFileInput.click());
+      csvFileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleCsvFileImport(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+
+      ['dragenter', 'dragover'].forEach(evName => {
+        csvDropZone.addEventListener(evName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          csvDropZone.classList.add('border-amber-400', 'bg-amber-500/10');
+        });
+      });
+      ['dragleave', 'drop'].forEach(evName => {
+        csvDropZone.addEventListener(evName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          csvDropZone.classList.remove('border-amber-400', 'bg-amber-500/10');
+        });
+      });
+      csvDropZone.addEventListener('drop', (e) => {
+        const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) handleCsvFileImport(f);
+      });
+
+      // Also support dropping CSV directly onto the batch textarea
+      const batchInputEl = document.getElementById('batchInput');
+      batchInputEl.addEventListener('dragover', (e) => { e.preventDefault(); });
+      batchInputEl.addEventListener('drop', (e) => {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          e.preventDefault();
+          handleCsvFileImport(e.dataTransfer.files[0]);
+        }
       });
 
       let seqCounter = 100;
@@ -1510,67 +1988,210 @@ if __name__ == '__main__':
         showToast('Downloaded exact 64px-tall 1-bit PNG strip.');
       });
 
+      document.getElementById('toggleSerialDrawerBtn').addEventListener('click', () => {
+        const drawer = document.getElementById('serialInspectorDrawer');
+        drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        drawer.classList.add('ring-1', 'ring-emerald-500/60');
+        setTimeout(() => drawer.classList.remove('ring-1', 'ring-emerald-500/60'), 1200);
+      });
+
+      document.getElementById('clearSerialLogBtn').addEventListener('click', () => {
+        document.getElementById('serialConsoleLog').textContent = '[CubeTag64 Serial Console Cleared]';
+      });
+
+      let simToggle = 0;
+      document.getElementById('simulateStatusBtn').addEventListener('click', () => {
+        simToggle = (simToggle + 1) % 3;
+        const pkt = new Uint8Array(32);
+        pkt[0] = 0x80; pkt[1] = 0x20; pkt[2] = 0x42; pkt[3] = 0x30; pkt[4] = 0x68; pkt[5] = 0x30;
+        pkt[10] = 0x0C; // 12mm
+        pkt[11] = 0x01; // Laminated TZe
+        pkt[24] = 0x01; pkt[25] = 0x08;
+        if (simToggle === 1) {
+          // Ready state
+          pkt[8] = 0x00; pkt[9] = 0x00; pkt[18] = 0x00; pkt[19] = 0x00;
+          logSerialConsole('--- Simulating 32-Byte ESC i S Ready Packet (12mm TZe) ---');
+        } else if (simToggle === 2) {
+          // Simulated Error Info 1 & 2 (Cutter Jam + Weak Batteries + Cover Open)
+          pkt[8] = 0x04 | 0x08;
+          pkt[9] = 0x10;
+          pkt[18] = 0x02; pkt[19] = 0x00;
+          logSerialConsole('--- Simulating 32-Byte ESC i S Error Packet (status[8]=0x0C, status[9]=0x10) ---');
+        } else {
+          // Simulated Print Completed notification
+          pkt[8] = 0x00; pkt[9] = 0x00; pkt[18] = 0x01; pkt[19] = 0x00;
+          logSerialConsole('--- Simulating 32-Byte Post-Print Completion Packet (status[18]=0x01) ---');
+        }
+        decodeAndDisplayBrotherStatus(pkt);
+      });
+
+      document.getElementById('queryStatusBtn').addEventListener('click', async () => {
+        if (!('serial' in navigator)) {
+          showToast('Web Serial API requires Chrome/Edge. Click "Simulate Packet" to preview the 32B Status Decoder.');
+          return;
+        }
+        let port = null;
+        let writer = null;
+        let reader = null;
+        try {
+          port = await navigator.serial.requestPort();
+          await port.open({ baudRate: 9600 });
+          writer = port.writable.getWriter();
+          reader = port.readable ? port.readable.getReader() : null;
+          const rxCarry = [];
+
+          logSerialConsole('TX: [00 x 100] + 1B 40 (ESC @ Reset)');
+          const wakeReset = new Uint8Array(102);
+          wakeReset.set([0x1B, 0x40], 100);
+          await writer.write(wakeReset);
+          await new Promise(r => setTimeout(r, 150));
+
+          logSerialConsole('TX: 1B 69 53 (ESC i S Status Info Request)');
+          await writer.write(new Uint8Array([0x1B, 0x69, 0x53]));
+
+          if (reader) {
+            const pkt = await readNext32ByteStatusPacket(reader, rxCarry, 1500);
+            if (pkt) {
+              const info = decodeAndDisplayBrotherStatus(pkt);
+              showToast(info.allErrors.length
+                ? `PT-P300BT Status Error: ${info.allErrors.join(', ')}`
+                : `PT-P300BT Ready: ${info.tapeWidthMm}mm TZe (media=0x${info.mediaType.toString(16).padStart(2, '0')})`);
+            } else {
+              logSerialConsole('WARN: Timed out waiting for 32-byte 0x80 0x20 status packet.');
+              showToast('No 32-byte status packet received. Verify Outgoing Bluetooth COM port.');
+            }
+          }
+        } catch (err) {
+          logSerialConsole(`ERROR: ${err.message || err}`);
+          showToast(`Serial Status Probe failed: ${err.message || 'Check Bluetooth connection'}`);
+        } finally {
+          if (reader) {
+            try { await reader.cancel(); } catch (e) {}
+            try { reader.releaseLock(); } catch (e) {}
+          }
+          if (writer) {
+            try { writer.releaseLock(); } catch (e) {}
+          }
+          if (port) {
+            try { await port.close(); } catch (e) {}
+          }
+        }
+      });
+
       document.getElementById('webSerialPrintBtn').addEventListener('click', async () => {
         if (!('serial' in navigator)) {
           showToast('Web Serial API requires desktop Chrome/Edge on GitHub Pages or localhost. Use the "3. Python Direct Printer" tab or download the PNG!');
           return;
         }
         let port = null;
+        let writer = null;
+        let reader = null;
         try {
           port = await navigator.serial.requestPort();
           await port.open({ baudRate: 9600 });
-          const writer = port.writable.getWriter();
-          const reader = port.readable ? port.readable.getReader() : null;
+          writer = port.writable.getWriter();
+          reader = port.readable ? port.readable.getReader() : null;
+          const rxCarry = [];
 
-          showToast('1/3 Waking PT-P300BT & reading 32-byte tape status...');
-          // 1. Send 100 null bytes + ESC @ (Reset) + ESC i S (Status request)
-          const wakeup = new Uint8Array(105);
-          wakeup.set([0x1B, 0x40, 0x1B, 0x69, 0x53], 100);
-          await writer.write(wakeup);
+          showToast('1/4 Waking PT-P300BT & reading 32-byte ESC i S status...');
+          logSerialConsole('=== Starting PT-P300BT Print Job ===');
+          logSerialConsole('TX Step 1–2: [00 x 100] (Invalidate) + 1B 40 (ESC @ Initialize)');
+          const wakeReset = new Uint8Array(102);
+          wakeReset.set([0x1B, 0x40], 100);
+          await writer.write(wakeReset);
+          await new Promise(r => setTimeout(r, 150));
 
-          // Read up to 32 status bytes with a 700ms timeout
+          logSerialConsole('TX Step 3: 1B 69 53 (ESC i S Status Request)');
+          await writer.write(new Uint8Array([0x1B, 0x69, 0x53]));
+
           let mediaType = 0x01;
           let tapeWidthMm = 0x0C;
           if (reader) {
-            const statusBuf = [];
-            const deadline = Date.now() + 700;
-            while (Date.now() < deadline && statusBuf.length < 32) {
-              const readPromise = reader.read();
-              const timeoutPromise = new Promise(r => setTimeout(() => r({ timeout: true }), Math.max(50, deadline - Date.now())));
-              const res = await Promise.race([readPromise, timeoutPromise]);
-              if (res.timeout || res.done) break;
-              if (res.value) {
-                for (const b of res.value) statusBuf.push(b);
+            const statusPkt = await readNext32ByteStatusPacket(reader, rxCarry, 1500);
+            if (statusPkt) {
+              const decoded = decodeAndDisplayBrotherStatus(statusPkt);
+              tapeWidthMm = decoded.tapeWidthMm;
+              mediaType = decoded.mediaType;
+              if (decoded.allErrors.length > 0) {
+                throw new Error(`Printer halted with Error Info: ${decoded.allErrors.join(', ')}`);
+              }
+            } else {
+              logSerialConsole('WARN: No 32-byte status packet received within 1500ms; defaulting to 12mm Laminated TZe (0x0C / 0x01).');
+            }
+          }
+
+          const overfeedDots = getOverfeedDots();
+          showToast(`2/4 Streaming PackBits (4D 02) raster + ${state.overfeedMm}mm cutter overfeed...`);
+          const payload = buildBrotherPTCBPPayload(state.lastRasterColumns, mediaType, tapeWidthMm, overfeedDots);
+          logSerialConsole(`TX Steps 4–10: Streaming ${payload.length} bytes (${state.lastRasterColumns.length} tag cols + ${overfeedDots} cutter overfeed cols [${state.overfeedMm}mm] + 0x1A feed)...`);
+
+          // Write in 192-byte chunks with 12ms pacing so the Bluetooth UART buffer never overflows
+          const chunkSize = 192;
+          for (let off = 0; off < payload.length; off += chunkSize) {
+            const slice = payload.subarray(off, Math.min(payload.length, off + chunkSize));
+            await writer.write(slice);
+            await new Promise(r => setTimeout(r, 12));
+          }
+
+          showToast('3/4 Waiting for PT-P300BT post-print completion status (0x01) before closing port...');
+          logSerialConsole('TX Complete. Waiting for post-print 32-byte completion packet (status[18]==0x01) before closing serial port...');
+
+          // Estimate maximum print duration based on strip width (~180 cols/sec + 8s margin)
+          const waitBudgetMs = Math.max(8000, Math.min(25000, Math.ceil((state.lastRasterColumns.length / 80) * 1000) + 6000));
+          const waitEnd = Date.now() + waitBudgetMs;
+          let sawPrintPhase = false;
+          let printConfirmed = false;
+
+          if (reader) {
+            while (Date.now() < waitEnd) {
+              const postPkt = await readNext32ByteStatusPacket(reader, rxCarry, Math.min(2000, Math.max(200, waitEnd - Date.now())));
+              if (!postPkt) {
+                if (sawPrintPhase) continue;
+                continue;
+              }
+              const postInfo = decodeAndDisplayBrotherStatus(postPkt);
+              if (postInfo.phaseType === 0x01) {
+                sawPrintPhase = true;
+              }
+              if (postInfo.statusType === 0x01) {
+                printConfirmed = true;
+                logSerialConsole('✓ Post-print completion status (status[18]==0x01) confirmed! Safe to close port.');
+                break;
+              }
+              if (postInfo.statusType === 0x02 || postInfo.allErrors.length > 0) {
+                throw new Error(`Printer error during print: ${postInfo.allErrors.join(', ') || 'status[18]==0x02'}`);
+              }
+              if (sawPrintPhase && postInfo.statusType === 0x06 && postInfo.phaseType === 0x00) {
+                printConfirmed = true;
+                logSerialConsole('✓ Printer returned to Phase 0 Ready state after printing! Safe to close port.');
+                break;
               }
             }
-            try { await reader.cancel(); } catch (e) {}
-            reader.releaseLock();
-            if (statusBuf.length >= 32 && statusBuf[0] === 0x80) {
-              tapeWidthMm = statusBuf[10] || 0x0C;
-              mediaType = statusBuf[11] || 0x01;
-            }
           }
 
-          showToast(`2/3 Streaming PackBits (4D 02) raster for ${tapeWidthMm}mm TZe tape...`);
-          const payload = buildBrotherPTCBPPayload(state.lastRasterColumns, mediaType, tapeWidthMm);
-
-          // Write in 256-byte chunks with 10ms pacing so the Bluetooth UART buffer never overflows
-          for (let off = 0; off < payload.length; off += 256) {
-            const slice = payload.subarray(off, Math.min(payload.length, off + 256));
-            await writer.write(slice);
-            await new Promise(r => setTimeout(r, 10));
+          if (!printConfirmed) {
+            logSerialConsole('Notice: Post-print status wait window elapsed; holding port 500ms before closing.');
+            await new Promise(r => setTimeout(r, 500));
+          } else {
+            await new Promise(r => setTimeout(r, 250));
           }
 
-          // Wait briefly before closing RFCOMM port so the printer finishes reading the buffer
-          await new Promise(r => setTimeout(r, 1500));
-          writer.releaseLock();
-          await port.close();
-          showToast(`3/3 Sent ${state.lastRasterColumns.length} PackBits columns to PT-P300BT (${tapeWidthMm}mm TZe)!`);
+          showToast(`4/4 Printed ${state.lastRasterColumns.length} PackBits columns on PT-P300BT (${tapeWidthMm}mm TZe)!`);
         } catch (err) {
+          logSerialConsole(`ERROR: ${err.message || err}`);
+          showToast(`Bluetooth Serial notice: ${err.message || 'Check Outgoing COM port or press power button once to clear red LED.'}`);
+        } finally {
+          if (reader) {
+            try { await reader.cancel(); } catch (e) {}
+            try { reader.releaseLock(); } catch (e) {}
+          }
+          if (writer) {
+            try { writer.releaseLock(); } catch (e) {}
+          }
           if (port) {
             try { await port.close(); } catch (e) {}
+            logSerialConsole('Serial port closed cleanly.');
           }
-          showToast(`Bluetooth Serial notice: ${err.message || 'Check Outgoing COM port or press power button once to clear red LED.'}`);
         }
       });
 
